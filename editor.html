@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Редактор — Васаик аль-Фазар</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1a1612;--surface:#242018;--surface2:#2e2820;--surface3:#3a3228;
+  --border:#4a4038;--border-light:#5a5048;
+  --text:#e8dcc8;--text-dim:#a09080;--text-faint:#6a5a48;
+  --copper:#c4742a;--copper-dim:#a05a1a;--copper-glow:rgba(196,116,42,.15);
+  --teal:#3a8888;--teal-dim:#2a6868;
+  --red:#c0392b;--green:#27ae60;
+  --dos-red:#cc4444;
+}
+html{height:100%}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+
+/* ── LOGIN ─────────────────────────────────────────── */
+#loginScreen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:1.5rem}
+.login-title{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:400;color:var(--text);letter-spacing:.1em}
+.login-title em{font-style:italic;color:var(--copper)}
+.login-sub{font-size:.8rem;color:var(--text-dim);letter-spacing:.15em;text-transform:uppercase}
+.login-form{display:flex;flex-direction:column;gap:.8rem;width:300px}
+.login-input{padding:.7rem 1rem;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:.95rem;text-align:center;outline:none;letter-spacing:.05em;font-family:'Inter',sans-serif}
+.login-input:focus{border-color:var(--copper)}
+.login-input.error{border-color:var(--red);animation:shake .4s}
+.login-btn{padding:.7rem;background:var(--copper);color:#fff;border:none;border-radius:4px;font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;transition:background .2s}
+.login-btn:hover{background:var(--copper-dim)}
+.login-error{font-size:.78rem;color:var(--red);text-align:center;min-height:1.2em;font-style:italic}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+
+/* ── LAYOUT ─────────────────────────────────────────── */
+#app{display:none;height:100vh;flex-direction:column}
+#app.visible{display:flex}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;gap:1rem;padding:.6rem 1.5rem;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.topbar-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--text-dim);letter-spacing:.05em}
+.topbar-title em{color:var(--copper);font-style:italic}
+.topbar-spacer{flex:1}
+.topbar-link{font-size:.78rem;color:var(--text-dim);text-decoration:none;padding:.3rem .7rem;border:1px solid var(--border);border-radius:3px;transition:all .2s}
+.topbar-link:hover{color:var(--text);border-color:var(--border-light)}
+.save-status{font-size:.75rem;color:var(--text-faint);font-style:italic}
+.save-status.saving{color:var(--copper)}
+.save-status.saved{color:var(--green)}
+.save-status.error{color:var(--red)}
+
+/* BODY */
+.editor-body{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:260px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-header{padding:.8rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.5rem}
+.sidebar-header h3{font-size:.8rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);font-weight:500;flex:1}
+.btn-new{padding:.3rem .7rem;background:var(--copper);color:#fff;border:none;border-radius:3px;font-size:.75rem;cursor:pointer;font-weight:500;white-space:nowrap;transition:background .2s}
+.btn-new:hover{background:var(--copper-dim)}
+
+/* Category tabs */
+.cat-tabs{display:flex;flex-direction:column;border-bottom:1px solid var(--border)}
+.cat-tab{padding:.5rem 1rem;font-size:.8rem;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;gap:.5rem;border:none;background:none;text-align:left;border-left:2px solid transparent;transition:all .15s}
+.cat-tab:hover{color:var(--text);background:var(--surface2)}
+.cat-tab.active{color:var(--copper);border-left-color:var(--copper);background:var(--copper-glow)}
+.cat-tab .cat-count{margin-left:auto;font-size:.7rem;color:var(--text-faint);background:var(--surface3);padding:.1rem .4rem;border-radius:8px}
+
+/* Entry list */
+.entry-list{flex:1;overflow-y:auto;padding:.4rem 0}
+.entry-item{padding:.5rem 1rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;border-left:2px solid transparent;transition:all .15s}
+.entry-item:hover{background:var(--surface2)}
+.entry-item.active{background:var(--copper-glow);border-left-color:var(--copper)}
+.entry-item-title{font-size:.82rem;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.entry-item-title.locked-item{color:var(--text-dim)}
+.entry-item .badge{font-size:.62rem;padding:.1rem .35rem;border-radius:8px;white-space:nowrap;flex-shrink:0}
+.badge-public{background:rgba(39,174,96,.15);color:var(--green)}
+.badge-locked{background:rgba(160,144,128,.1);color:var(--text-faint)}
+.entry-empty{padding:1rem;font-size:.78rem;color:var(--text-faint);font-style:italic;text-align:center}
+
+/* MAIN PANEL */
+.main-panel{flex:1;overflow-y:auto;padding:2rem;display:flex;flex-direction:column;gap:0}
+
+/* Split editor layout */
+.main-panel.split{overflow:hidden;padding:0;flex-direction:row}
+.split-meta{flex:0 0 380px;overflow-y:auto;padding:1.5rem;border-right:1px solid var(--border);display:flex;flex-direction:column}
+.split-editor{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.split-editor .preview-section{flex:1;display:flex;flex-direction:column;overflow:hidden;margin:0;border-radius:0;border:none}
+.split-editor .preview-body{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:.8rem 1.2rem}
+.split-editor #editPane{flex:1;display:flex;flex-direction:column;overflow:hidden;gap:.5rem}
+.split-editor .form-group{flex:1;display:flex;flex-direction:column;min-height:0}
+.split-editor textarea{flex:1;min-height:0;resize:none;font-size:.9rem;line-height:1.7}
+.split-editor #previewPane{flex:1;overflow-y:auto}
+.split-form-actions{padding:.8rem 1.2rem;border-top:1px solid var(--border);display:flex;gap:.8rem;flex-shrink:0}
+
+/* Welcome */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:1rem;color:var(--text-dim);text-align:center}
+.welcome h2{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:400;color:var(--text)}
+.welcome p{font-size:.85rem;max-width:340px;line-height:1.6}
+
+/* FORM */
+.form-section{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1.5rem;margin-bottom:1.2rem}
+.form-section-title{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim);margin-bottom:1.2rem;padding-bottom:.6rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.5rem}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+.form-row.full{grid-template-columns:1fr}
+.form-group{display:flex;flex-direction:column;gap:.4rem}
+label{font-size:.75rem;color:var(--text-dim);letter-spacing:.05em;font-weight:500}
+input[type=text],select,textarea{padding:.55rem .8rem;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:.85rem;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s;width:100%}
+input[type=text]:focus,select:focus,textarea:focus{border-color:var(--copper)}
+select option{background:var(--surface2)}
+textarea{resize:vertical;min-height:200px;font-family:'Courier New',monospace;font-size:.8rem;line-height:1.6;tab-size:2}
+.field-hint{font-size:.7rem;color:var(--text-faint);font-style:italic}
+
+/* Toggle */
+.toggle-row{display:flex;align-items:center;gap:.8rem}
+.toggle{position:relative;width:40px;height:22px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:var(--surface3);border-radius:11px;border:1px solid var(--border);transition:all .2s}
+.toggle input:checked+.toggle-track{background:var(--copper);border-color:var(--copper)}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.toggle input:checked~.toggle-thumb{transform:translateX(18px)}
+.toggle-label{font-size:.82rem;color:var(--text)}
+
+/* CONTENT PREVIEW */
+.preview-section{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:1.2rem}
+.preview-tabs{display:flex;border-bottom:1px solid var(--border)}
+.preview-tab{padding:.5rem 1rem;font-size:.75rem;cursor:pointer;color:var(--text-dim);border:none;background:none;letter-spacing:.05em;transition:all .15s;border-bottom:2px solid transparent;margin-bottom:-1px}
+.preview-tab.active{color:var(--copper);border-bottom-color:var(--copper)}
+.preview-body{padding:1.2rem}
+
+/* Preview rendered */
+.preview-rendered{font-family:'Noto Serif',Georgia,serif;font-size:.9rem;line-height:1.7;color:#2a1f0e;background:#f2ead8;padding:1.5rem;border-radius:4px}
+.preview-rendered p{margin-bottom:.8rem}
+.preview-rendered p:last-child{margin-bottom:0}
+.preview-rendered.dossier-preview{font-family:'Courier New',monospace;background:#e8e4dc;font-size:.8rem}
+.preview-rendered .dossier-header{background:rgba(139,0,0,.1);border:1px solid rgba(139,0,0,.2);padding:.6rem .8rem;margin-bottom:1rem}
+.preview-rendered .dossier-stamp{font-weight:700;font-size:.75rem;letter-spacing:.2em;color:#8b0000;margin-bottom:.3rem}
+.preview-rendered .dossier-meta{display:flex;flex-wrap:wrap;gap:.8rem;font-size:.68rem;color:#444}
+.preview-rendered .dossier-field{display:grid;grid-template-columns:120px 1fr;gap:.3rem .8rem;margin-bottom:.6rem;font-size:.78rem;line-height:1.4;border-bottom:1px dotted #ccc;padding-bottom:.6rem}
+.preview-rendered .dossier-label{font-weight:700;color:#666;font-size:.68rem;text-transform:uppercase}
+.preview-rendered .dossier-redacted{background:#1a1a1a;color:#1a1a1a;border-radius:1px;margin-top:.8rem;padding:.1rem 0;user-select:none}
+
+/* DOSSIER BUILDER */
+.dossier-builder{display:flex;flex-direction:column;gap:.8rem}
+.dossier-fields-list{display:flex;flex-direction:column;gap:.5rem}
+.dossier-field-row{display:grid;grid-template-columns:140px 1fr auto;gap:.5rem;align-items:start}
+.dossier-field-row input{font-size:.8rem}
+.btn-icon{padding:.4rem .6rem;background:var(--surface3);border:1px solid var(--border);border-radius:3px;color:var(--text-dim);cursor:pointer;font-size:.8rem;transition:all .15s;white-space:nowrap}
+.btn-icon:hover{background:var(--surface2);color:var(--text)}
+.btn-icon.danger:hover{background:rgba(192,57,43,.2);color:var(--red);border-color:var(--red)}
+.add-field-btn{align-self:flex-start;font-size:.75rem}
+.redact-row{display:flex;align-items:center;gap:.8rem}
+.redact-toggle{display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:var(--text-dim);cursor:pointer}
+.redact-toggle input{accent-color:var(--dos-red)}
+
+/* FORM ACTIONS */
+.form-actions{display:flex;gap:.8rem;margin-top:.5rem}
+.btn{padding:.55rem 1.2rem;border-radius:4px;font-size:.82rem;cursor:pointer;border:none;font-weight:500;letter-spacing:.03em;transition:all .2s;font-family:'Inter',sans-serif}
+.btn-primary{background:var(--copper);color:#fff}
+.btn-primary:hover{background:var(--copper-dim)}
+.btn-secondary{background:var(--surface3);color:var(--text-dim);border:1px solid var(--border)}
+.btn-secondary:hover{color:var(--text);border-color:var(--border-light)}
+.btn-danger{background:rgba(192,57,43,.15);color:var(--red);border:1px solid rgba(192,57,43,.3)}
+.btn-danger:hover{background:rgba(192,57,43,.25)}
+
+/* PASSWORDS PANEL */
+.pw-list{display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem}
+.pw-row{display:grid;grid-template-columns:1fr 1fr auto;gap:.6rem;align-items:center}
+.pw-row input{font-size:.8rem}
+.pw-ids-input{font-size:.75rem;color:var(--text-dim)}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:.7rem 1.2rem;font-size:.82rem;color:var(--text);opacity:0;transform:translateY(8px);transition:all .25s;z-index:9999;pointer-events:none;max-width:300px}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{border-color:var(--green);color:var(--green)}
+.toast.error{border-color:var(--red);color:var(--red)}
+
+/* CONFIRM DIALOG */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:8000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.confirm-overlay.open{opacity:1;pointer-events:all}
+.confirm-box{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1.5rem;max-width:360px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.confirm-title{font-size:.95rem;color:var(--text);margin-bottom:.5rem;font-weight:500}
+.confirm-msg{font-size:.82rem;color:var(--text-dim);margin-bottom:1.2rem;line-height:1.5}
+.confirm-actions{display:flex;gap:.6rem;justify-content:flex-end}
+
+
+/* RARITY BUTTONS */
+.rarity-picker{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.3rem}
+.rarity-btn{padding:.3rem .8rem;border-radius:3px;font-size:.75rem;font-weight:600;letter-spacing:.08em;cursor:pointer;border:2px solid transparent;transition:all .15s;font-family:"Inter",sans-serif;opacity:.5}
+.rarity-btn:hover{opacity:.8}
+.rarity-btn.active{opacity:1;transform:scale(1.05)}
+.rarity-btn.r-common{color:#c8c8c8;border-color:#c8c8c8;background:rgba(200,200,200,.1)}
+.rarity-btn.r-uncommon{color:#1eff00;border-color:#1eff00;background:rgba(30,255,0,.08)}
+.rarity-btn.r-rare{color:#0070dd;border-color:#0070dd;background:rgba(0,112,221,.1)}
+.rarity-btn.r-epic{color:#a335ee;border-color:#a335ee;background:rgba(163,53,238,.1)}
+.rarity-btn.r-legendary{color:#ff8000;border-color:#ff8000;background:rgba(255,128,0,.1)}
+
+/* TIER SLIDER */
+.tier-picker{display:flex;gap:.3rem;margin-top:.4rem}
+.tier-pick-btn{flex:1;padding:.35rem 0;border-radius:3px;font-size:.75rem;font-weight:600;letter-spacing:.06em;cursor:pointer;border:2px solid var(--border);background:var(--surface2);color:var(--text-dim);transition:all .15s;font-family:'Inter',sans-serif}
+.tier-pick-btn:hover{border-color:var(--border-light);color:var(--text)}
+.tier-pick-btn.active{background:var(--copper-glow);border-color:var(--copper);color:var(--copper)}
+.tier-pick-btn:disabled{opacity:.35;cursor:not-allowed}
+.tier-value{font-size:.8rem;color:var(--text-dim);min-width:60px}
+
+/* GENDER PICK */
+.gender-pick{display:flex;gap:.3rem;margin-top:.4rem}
+.gender-btn{flex:1;padding:.35rem .6rem;border-radius:3px;font-size:.75rem;font-weight:600;cursor:pointer;border:2px solid var(--border);background:var(--surface2);color:var(--text-dim);transition:all .15s;font-family:'Inter',sans-serif}
+.gender-btn:hover{border-color:var(--border-light);color:var(--text)}
+.gender-btn.active{background:var(--copper-glow);border-color:var(--copper);color:var(--copper)}
+
+/* STATUS BADGE */
+.status-badge-preview{display:inline-block;margin-top:.3rem;font-size:.72rem;padding:.15rem .55rem;border-radius:10px;font-style:italic;background:rgba(196,116,42,.15);color:var(--copper);border:1px solid rgba(196,116,42,.3)}
+
+/* FORMAT TOOLBAR */
+.fmt-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:.3rem;padding:.5rem;background:var(--surface3);border:1px solid var(--border);border-bottom:none;border-radius:4px 4px 0 0}
+.fmt-group{display:flex;gap:.25rem}
+.fmt-sep{width:1px;height:20px;background:var(--border);margin:0 .2rem}
+.fmt-btn{padding:.25rem .6rem;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--text-dim);cursor:pointer;font-size:.75rem;font-family:"Inter",sans-serif;transition:all .15s;white-space:nowrap}
+.fmt-btn:hover{background:var(--surface);color:var(--text);border-color:var(--border-light)}
+.fmt-btn.fmt-bold strong{font-weight:700;color:var(--text)}
+.fmt-btn.fmt-italic em{font-style:italic;color:var(--text)}
+.fmt-btn.fmt-dos{color:var(--dos-red);border-color:rgba(204,68,68,.3)}
+.fmt-btn.fmt-dos:hover{background:rgba(204,68,68,.1);border-color:var(--dos-red);color:var(--dos-red)}
+textarea{border-radius:0 0 4px 4px !important}
+
+/* FORMAT TOGGLE (Markdown / HTML) */
+.format-toggle{display:flex;gap:0;border:1px solid var(--border);border-radius:3px;overflow:hidden;font-size:.7rem;margin-left:auto}
+.format-toggle button{padding:.2rem .55rem;background:var(--surface2);color:var(--text-faint);border:none;cursor:pointer;font-family:inherit;letter-spacing:.05em;transition:all .15s}
+.format-toggle button.active{background:var(--copper);color:#fff}
+.format-toggle button:not(.active):hover{background:var(--surface3);color:var(--text-dim)}
+
+/* SLASH COMMAND POPUP */
+.slash-popup{position:absolute;background:var(--surface);border:1px solid var(--border-light);border-radius:4px;box-shadow:0 8px 24px rgba(0,0,0,.5);min-width:240px;z-index:1500;overflow:hidden;display:none}
+.slash-popup.open{display:block}
+.slash-item{padding:.5rem .8rem;font-size:.8rem;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;gap:.6rem;border-bottom:1px solid var(--border)}
+.slash-item:last-child{border-bottom:none}
+.slash-item:hover,.slash-item.selected{background:var(--copper-glow);color:var(--text)}
+.slash-item-icon{font-size:.9rem;width:18px;text-align:center;color:var(--copper)}
+.slash-item-label{flex:1}
+.slash-item-hint{font-size:.68rem;color:var(--text-faint);font-family:'Courier New',monospace}
+
+/* CONVERT BUTTON (small inline migration helper) */
+.convert-btn{padding:.2rem .55rem;background:transparent;border:1px solid var(--border);border-radius:3px;color:var(--text-faint);cursor:pointer;font-size:.7rem;font-family:inherit;transition:all .15s}
+.convert-btn:hover{color:var(--copper);border-color:var(--copper)}
+
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-title"><em>Васаик</em> аль-Фазар</div>
+  <div class="login-sub">Редактор · Только для мастера</div>
+  <div class="login-form">
+    <input class="login-input" id="loginInput" type="password"
+      placeholder="GitHub Personal Access Token"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="login-error" id="loginError"></div>
+    <button class="login-btn" onclick="doLogin()">Войти</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-title"><em>Васаик</em> аль-Фазар · Редактор</div>
+    <div class="topbar-spacer"></div>
+    <span class="save-status" id="saveStatus"></span>
+    <a class="topbar-link" href="/" target="_blank">↗ Открыть сайт</a>
+  </div>
+
+  <div class="editor-body">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h3>Архив</h3>
+        <button class="btn-new" onclick="newEntry()">+ Новая</button>
+      </div>
+      <div class="cat-tabs" id="catTabs"></div>
+      <div class="entry-list" id="entryList"></div>
+    </div>
+
+    <!-- MAIN PANEL -->
+    <div class="main-panel" id="mainPanel">
+      <div class="welcome">
+        <h2>Редактор архива</h2>
+        <p>Выберите запись из списка слева или создайте новую.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirmTitle"></div>
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" onclick="confirmResolve(false)">Отмена</button>
+      <button class="btn btn-danger" onclick="confirmResolve(true)" id="confirmOkBtn">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- SLASH COMMAND POPUP -->
+<div class="slash-popup" id="slashPopup"></div>
+
+<script>
+// ── CONFIG — fill in before deploying to GitHub Pages ─────────────
+const GITHUB_OWNER     = '';                         // ваш GitHub username
+const GITHUB_DATA_REPO = 'dnd-lore-encyclopeadia';   // приватный репо с данными
+const GITHUB_BRANCH    = 'main';
+// ──────────────────────────────────────────────────────────────────
+
+const EDITOR_KEY_STORAGE = 'vasaiq_editor_key';
+let fileSha = null;
+let editorKey = '';
+let data = null;
+let activeCatId = null;
+let activeEntryId = null;
+let confirmCb = null;
+let previewMode = 'edit'; // 'edit' | 'preview'
+
+// ── LOGIN ──────────────────────────────────────────────────────────
+function doLogin() {
+  const val = document.getElementById('loginInput').value.trim();
+  if (!val) return;
+  editorKey = val;
+  fetchData().then(ok => {
+    if (ok) {
+      sessionStorage.setItem(EDITOR_KEY_STORAGE, editorKey);
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('app').classList.add('visible');
+    } else {
+      document.getElementById('loginInput').classList.add('error');
+      document.getElementById('loginError').textContent = 'Неверный ключ.';
+      setTimeout(() => document.getElementById('loginInput').classList.remove('error'), 500);
+    }
+  });
+}
+document.getElementById('loginInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+// Restore session
+const savedKey = sessionStorage.getItem(EDITOR_KEY_STORAGE);
+if (savedKey) {
+  editorKey = savedKey;
+  fetchData().then(ok => {
+    if (ok) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('app').classList.add('visible');
+    } else {
+      sessionStorage.removeItem(EDITOR_KEY_STORAGE);
+      editorKey = '';
+    }
+  });
+}
+
+// ── DATA ───────────────────────────────────────────────────────────
+async function fetchData() {
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_DATA_REPO}/contents/lore.json?ref=${GITHUB_BRANCH}`,
+      { headers: { 'Authorization': `token ${editorKey}`, 'Accept': 'application/vnd.github+json' } }
+    );
+    if (!res.ok) return false;
+    const meta = await res.json();
+    fileSha = meta.sha;
+    data = JSON.parse(decodeURIComponent(escape(atob(meta.content.replace(/\n/g, '')))));
+    activeCatId = activeCatId || data.categories[0].id;
+    buildSidebar();
+    return true;
+  } catch { return false; }
+}
+
+async function writeToGitHub(message) {
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+  const res = await fetch(
+    `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_DATA_REPO}/contents/lore.json`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${editorKey}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/vnd.github+json'
+      },
+      body: JSON.stringify({ message, content, sha: fileSha, branch: GITHUB_BRANCH })
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `HTTP ${res.status}`);
+  }
+  const result = await res.json();
+  fileSha = result.content.sha;
+}
+
+function collectEntryFields() {
+  return {
+    ideal:       document.getElementById('fIdeal')?.value.trim()      || '',
+    bond:        document.getElementById('fBond')?.value.trim()       || '',
+    flaw:        document.getElementById('fFlaw')?.value.trim()       || '',
+    lifeStatus:  document.getElementById('fLifeStatus')?.value        ?? '',
+    gender:      document.getElementById('fGender')?.value            ?? '',
+    faction:     document.getElementById('fFaction')?.value           ?? '',
+    race:        document.getElementById('fRace')?.value              ?? '',
+    symbol:      document.getElementById('fSymbol')?.value.trim()     || '',
+    domain:      document.getElementById('fDomain')?.value.trim()     || '',
+    alignment:   document.getElementById('fAlignment')?.value         ?? '',
+    deityStatus: document.getElementById('fDeityStatus')?.value       ?? '',
+    adventure:   document.getElementById('fAdventure')?.value.trim()  || '',
+    subtitle:    document.getElementById('fSubtitle')?.value.trim()   || '',
+    region:      document.getElementById('fRegion')?.value.trim()     || '',
+    placeType:   document.getElementById('fPlaceType')?.value.trim()  || '',
+    tagline:     document.getElementById('fTagline')?.value.trim()    || '',
+    content2:    document.getElementById('fContent2')?.value          || '',
+    content3:    document.getElementById('fContent3')?.value          || '',
+    rarity:      document.getElementById('fRarity')?.value            || 'common',
+    maxTier:     parseInt(document.getElementById('fMaxTier')?.value  || '1'),
+    format:      document.getElementById('fFormat')?.value            || 'md',
+  };
+}
+
+function setStatus(msg, type='') {
+  const el = document.getElementById('saveStatus');
+  el.textContent = msg;
+  el.className = 'save-status ' + type;
+}
+
+// ── SIDEBAR ────────────────────────────────────────────────────────
+function buildSidebar() {
+  // Category tabs
+  document.getElementById('catTabs').innerHTML = data.categories.map(cat => {
+    const count = data.entries.filter(e => e.category === cat.id).length;
+    return `<button class="cat-tab ${cat.id === activeCatId ? 'active' : ''}"
+      onclick='setActiveCat(${JSON.stringify(cat.id)})'>
+      <span>${cat.icon}</span> ${escHtml(cat.label)}
+      <span class="cat-count">${count}</span>
+    </button>`;
+  }).join('');
+
+  // Entry list
+  const entries = data.entries.filter(e => e.category === activeCatId);
+  if (!entries.length) {
+    document.getElementById('entryList').innerHTML =
+      `<div class="entry-empty">Нет записей в этом разделе</div>`;
+    if (typeof applySidebarSearch === 'function') applySidebarSearch();
+    return;
+  }
+  document.getElementById('entryList').innerHTML = entries.map(e => `
+    <div class="entry-item ${e.id === activeEntryId ? 'active' : ''}" onclick='selectEntry(${JSON.stringify(e.id)})'>
+      <span class="entry-item-title ${e.public ? '' : 'locked-item'}">${escHtml(e.title || '(без названия)')}</span>
+      <span class="badge ${e.public ? 'badge-public' : 'badge-locked'}">${e.public ? 'публично' : 'закрыто'}</span>
+    </div>`).join('');
+  if (typeof applySidebarSearch === 'function') applySidebarSearch();
+}
+
+async function setActiveCat(id) {
+  if (!await confirmDiscardIfDirty()) return;
+  isDirty = false;
+  activeCatId = id;
+  activeEntryId = null;
+  buildSidebar();
+  showWelcome();
+}
+
+async function selectEntry(id) {
+  if (id === activeEntryId) return;
+  if (!await confirmDiscardIfDirty()) return;
+  isDirty = false;
+  activeEntryId = id;
+  buildSidebar();
+  const entry = data.entries.find(e => e.id === id);
+  showEntryForm(entry);
+}
+
+function showWelcome() {
+  document.getElementById('mainPanel').className = 'main-panel';
+  document.getElementById('mainPanel').innerHTML = `
+    <div class="welcome">
+      <h2>Редактор архива</h2>
+      <p>Выберите запись из списка слева или создайте новую.</p>
+    </div>`;
+}
+
+// ── NEW ENTRY ──────────────────────────────────────────────────────
+async function newEntry() {
+  if (!await confirmDiscardIfDirty()) return;
+  isDirty = false;
+  activeEntryId = null;
+  buildSidebar();
+  const cat = data.categories.find(c => c.id === activeCatId);
+  showEntryForm({
+    id: '',
+    category: activeCatId,
+    title: '',
+    public: false,
+    content: cat.dossier ? getEmptyDossierContent() : ''
+  }, true);
+}
+
+function getEmptyDossierContent() {
+  return `<div class="dossier-header">
+  <div class="dossier-stamp">АСАС АЛЬ-СИРР</div>
+  <div class="dossier-meta">
+    <span>КЛАССИФИКАЦИЯ: УРОВЕНЬ 3</span>
+    <span>СТАТУС: НАБЛЮДЕНИЕ</span>
+    <span>ДЕЛ. № XXX / 1207 ГЛИ</span>
+  </div>
+</div>
+<div class="dossier-field">
+  <span class="dossier-label">СУБЪЕКТ</span>
+  <span>Описание субъекта.</span>
+</div>`;
+}
+
+// ── ENTRY FORM ─────────────────────────────────────────────────────
+function showEntryForm(entry, isNew = false) {
+  const cat = data.categories.find(c => c.id === entry.category);
+  const isDossier = cat && cat.dossier;
+
+  // Auto-generate id suggestion
+  const suggestedId = isNew
+    ? `${entry.category}-${Date.now()}`
+    : entry.id;
+
+  document.getElementById('mainPanel').className = 'main-panel split';
+  document.getElementById('mainPanel').innerHTML = `
+  <div class="split-meta">
+    <div class="form-section">
+      <div class="form-section-title">
+        ${isNew ? '✦ Новая запись' : '✦ Редактирование записи'}
+        ${!isNew ? `<span style="margin-left:auto;font-size:.7rem;color:var(--text-faint)">${entry.id}</span>` : ''}
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Заголовок</label>
+          <input type="text" id="fTitle" value="${escAttr(entry.title)}" placeholder="Название записи">
+        </div>
+        <div class="form-group">
+          <label>Категория</label>
+          <select id="fCategory" onchange="onCategoryChange()">
+            ${data.categories.map(c =>
+              `<option value="${escAttr(c.id)}" ${c.id === entry.category ? 'selected' : ''}>${escHtml(c.label)}</option>`
+            ).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row full">
+        <div class="form-group">
+          <label>Заметка <span style="font-size:.7rem;color:var(--text-faint);font-weight:400">(необязательно — отображается на карточке)</span></label>
+          <input type="text" id="fStatus" value="${escAttr(entry.status || '')}" placeholder="${escAttr(STATUS_HINTS[entry.category] || 'Регалии, цитата, прозвище...')}" oninput="updateStatusPreview()">
+          <span class="field-hint" id="statusPreviewWrap" style="margin-top:.3rem">${(entry.status || '').trim() ? `<span class="status-badge-preview">${escHtml(entry.status)}</span>` : ''}</span>
+        </div>
+      </div>
+
+      ${entry.category === 'npcs' || (isNew && activeCatId === 'npcs') ? `
+      <div class="form-section" style="margin-top:1rem;margin-bottom:0">
+        <div class="form-section-title" style="margin-bottom:1rem">⟡ Персонаж</div>
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Профессия / открывающая фраза <span style="font-size:.7rem;color:var(--text-faint);font-weight:400">(необязательно · отображается под именем)</span></label>
+            <input type="text" id="fSubtitle" value="${escAttr(entry.subtitle || '')}" placeholder="напр. Шарифа, волшебница · «Мир жесток и не заслуживает пощады»">
+          </div>
+        </div>
+        <div class="form-row" style="gap:.6rem">
+          <div class="form-group" style="flex:1">
+            <label>Раса</label>
+            <select id="fRace">
+              <option value="">— не указана —</option>
+              ${['Человек','Эльф','Орк','Дворф','Гном','Хафлинг','Гоблин','Тифлинг','Драконорождённый','Нурийи','Нисфийа'].map(r => `<option value="${r}" ${entry.race === r ? 'selected' : ''}>${r}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Фракция <span style="font-size:.7rem;color:var(--text-faint);font-weight:400">(необязательно)</span></label>
+            <select id="fFaction">
+              <option value="">— не указана —</option>
+              ${(data.entries.filter(e => e.category === 'factions')).map(f => `<option value="${escAttr(f.id)}" ${entry.faction === f.id ? 'selected' : ''}>${escHtml(f.title)}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="form-row" style="gap:.6rem;align-items:flex-end">
+          <div class="form-group" style="flex:1">
+            <label>Текущий статус</label>
+            <select id="fLifeStatus">
+              <option value="" ${!entry.lifeStatus ? 'selected' : ''}>— не указан —</option>
+              <option value="alive" ${entry.lifeStatus === 'alive' ? 'selected' : ''}>🟢 Жив(а)</option>
+              <option value="dead" ${entry.lifeStatus === 'dead' ? 'selected' : ''}>💀 Погиб(ла)</option>
+              <option value="imprisoned" ${entry.lifeStatus === 'imprisoned' ? 'selected' : ''}>⛓ В заключении</option>
+              <option value="fled" ${entry.lifeStatus === 'fled' ? 'selected' : ''}>🏃 Бежал(а)</option>
+              <option value="unknown" ${entry.lifeStatus === 'unknown' ? 'selected' : ''}>❓ Неизвестно</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:0 0 auto">
+            <label>Пол</label>
+            <div class="gender-pick">
+              <button type="button" class="gender-btn${entry.gender === 'm' ? ' active' : ''}" onclick="setGender('m')">М</button>
+              <button type="button" class="gender-btn${entry.gender === 'f' ? ' active' : ''}" onclick="setGender('f')">Ж</button>
+              <button type="button" class="gender-btn${!entry.gender ? ' active' : ''}" onclick="setGender('')">—</button>
+            </div>
+            <input type="hidden" id="fGender" value="${entry.gender || ''}">
+          </div>
+        </div>
+        <div class="form-section-title" style="margin-bottom:1rem;margin-top:1.2rem">⟡ Черты персонажа <span style="font-size:.7rem;color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0">— открываются на Тире 2</span></div>
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Идеал</label>
+            <input type="text" id="fIdeal" value="${escAttr(entry.ideal || '')}" placeholder="Во что верит, к чему стремится">
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Привязанность</label>
+            <input type="text" id="fBond" value="${escAttr(entry.bond || '')}" placeholder="Что или кто удерживает в этом мире">
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Изъян</label>
+            <input type="text" id="fFlaw" value="${escAttr(entry.flaw || '')}" placeholder="Слабость, слепое пятно, уязвимость">
+          </div>
+        </div>
+      </div>` : ''}
+
+      ${entry.category === 'locations' || (isNew && activeCatId === 'locations') ? `
+      <div class="form-section" style="margin-top:1rem;margin-bottom:0">
+        <div class="form-section-title" style="margin-bottom:1rem">🕌 Место</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Тип места</label>
+            <input type="text" id="fPlaceType" value="${escAttr(entry.placeType || '')}" placeholder="Квартал · Святилище · Караван-сарай · Руины">
+          </div>
+          <div class="form-group">
+            <label>Регион</label>
+            <input type="text" id="fRegion" value="${escAttr(entry.region || '')}" placeholder="Мансаб аль-Халиф · Пустыня · Северные ворота">
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Подзаголовок <span style="font-size:.7rem;color:var(--text-faint);font-weight:400">(одна строка под названием на карточке)</span></label>
+            <input type="text" id="fTagline" value="${escAttr(entry.tagline || '')}" placeholder="Где торгуют сном и где умирают тихо">
+          </div>
+        </div>
+      </div>` : ''}
+
+      ${entry.category === 'religion' || (isNew && activeCatId === 'religion') ? `
+      <div class="form-section" style="margin-top:1rem;margin-bottom:0">
+        <div class="form-section-title" style="margin-bottom:1rem">✦ Божество</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Домен</label>
+            <input type="text" id="fDomain" value="${escAttr(entry.domain || '')}" placeholder="Смерть · Огонь · Торговля · Обман">
+          </div>
+          <div class="form-group">
+            <label>Мировоззрение</label>
+            <select id="fAlignment">
+              <option value="">— не указано —</option>
+              ${['Законно-добрый','Нейтрально-добрый','Хаотично-добрый','Законно-нейтральный','Истинно нейтральный','Хаотично-нейтральный','Законно-злой','Нейтрально-злой','Хаотично-злой'].map(a => `<option value="${a}" ${entry.alignment === a ? 'selected' : ''}>${a}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Символы</label>
+            <input type="text" id="fSymbol" value="${escAttr(entry.symbol || '')}" placeholder="Чёрный лотос, весы без чаш, перевёрнутый полумесяц">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Статус в Имарате</label>
+            <select id="fDeityStatus">
+              <option value="">— не указан —</option>
+              ${['Государственный культ','Разрешён','Терпим','Запрещён','Забыт'].map(s => `<option value="${s}" ${entry.deityStatus === s ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+      </div>` : ''}
+
+      ${isNew ? `
+      <div class="form-row full">
+        <div class="form-group">
+          <label>ID записи</label>
+          <input type="text" id="fId" value="${suggestedId}" placeholder="уникальный-id">
+          <span class="field-hint">Только латиница, цифры и дефисы. После создания изменить нельзя.</span>
+        </div>
+      </div>` : ''}
+
+      <div class="form-row" ${entry.category === 'sessions' || (isNew && activeCatId === 'sessions') ? 'style="display:none"' : ''}>
+        <div class="form-group">
+          <label>Редкость</label>
+          <div class="rarity-picker" id="rarityPicker">
+            <button class="rarity-btn r-common ${(entry.rarity||'common')==='common'?'active':''}" onclick="setRarity('common')">Обычное</button>
+            <button class="rarity-btn r-uncommon ${entry.rarity==='uncommon'?'active':''}" onclick="setRarity('uncommon')">Необычное</button>
+            <button class="rarity-btn r-rare ${entry.rarity==='rare'?'active':''}" onclick="setRarity('rare')">Редкое</button>
+            <button class="rarity-btn r-epic ${entry.rarity==='epic'?'active':''}" onclick="setRarity('epic')">Эпическое</button>
+            <button class="rarity-btn r-legendary ${entry.rarity==='legendary'?'active':''}" onclick="setRarity('legendary')">Легендарное</button>
+          </div>
+          <input type="hidden" id="fRarity" value="${entry.rarity || 'common'}">
+        </div>
+        <div class="form-group" id="tierSliderGroup">
+          <label>Открытый тир</label>
+          <div class="tier-picker">
+            <button class="tier-pick-btn ${(entry.maxTier||1)>=1?'active':''}" id="tierBtn1" onclick="setMaxTier(1)">Тир 1</button>
+            <button class="tier-pick-btn ${(entry.maxTier||1)>=2?'active':''}" id="tierBtn2" onclick="setMaxTier(2)">Тир 2</button>
+            <button class="tier-pick-btn ${(entry.maxTier||1)>=3?'active':''}" id="tierBtn3" onclick="setMaxTier(3)">Тир 3</button>
+          </div>
+          <input type="hidden" id="fMaxTier" value="${entry.maxTier || 1}">
+        </div>
+      </div>
+
+      ${entry.category === 'sessions' || (isNew && activeCatId === 'sessions') ? `
+      <div class="form-section" style="margin-top:1rem;margin-bottom:0">
+        <div class="form-section-title" style="margin-bottom:1rem">📖 Сессия</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Приключение</label>
+            <input type="text" id="fAdventure" value="${escAttr(entry.adventure || '')}" placeholder="напр. Украденные сны">
+          </div>
+          <div class="form-group">
+            <label>Подзаголовок <span style="font-size:.7rem;color:var(--text-faint);font-weight:400">(отображается на карточке)</span></label>
+            <input type="text" id="fSubtitle" value="${escAttr(entry.subtitle || '')}" placeholder="Краткое описание сессии">
+          </div>
+        </div>
+      </div>` : ''}
+
+      ${entry.category === 'sessions' || (isNew && activeCatId === 'sessions') ? `
+      <input type="hidden" id="fPublic" value="true">
+      ` : `
+      <div class="form-row full">
+        <div class="form-group">
+          <div class="toggle-row">
+            <label class="toggle">
+              <input type="checkbox" id="fPublic" ${entry.public ? 'checked' : ''} onchange="updatePublicBadge()">
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+            <span class="toggle-label" id="publicLabel">${entry.public ? 'Публичная запись' : 'Закрыта (требует пароль)'}</span>
+          </div>
+        </div>
+      </div>
+      `}
+    </div>
+    <input type="hidden" id="fFormat" value="${entry.format || (isNew ? 'md' : detectFormat(entry))}">
+  </div>
+
+  <div class="split-editor">
+    <div class="preview-section">
+      <div class="preview-tabs">
+        <button class="preview-tab active" id="tabT1" onclick="switchContentTab(1)">✎ Тир 1</button>
+        <button class="preview-tab" id="tabT2" onclick="switchContentTab(2)">✎ Тир 2</button>
+        <button class="preview-tab" id="tabT3" onclick="switchContentTab(3)">✎ Тир 3</button>
+        <div style="flex:1"></div>
+        <button class="preview-tab" id="tabPreview" onclick="switchPreviewTab('preview')">◉ Предпросмотр</button>
+      </div>
+      <div class="preview-body">
+        <div id="editPane">
+          <div class="form-group">
+            <label style="margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;flex-shrink:0">
+              <span id="tierEditLabel">${isDossier ? 'Досье (Тир 1)' : 'Содержимое (Тир 1)'}</span>
+              <div class="format-toggle" title="Формат содержимого">
+                <button id="fmtMd"   onclick="setFormat('md')">Markdown</button>
+                <button id="fmtHtml" onclick="setFormat('html')">HTML</button>
+              </div>
+              ${(entry.format !== 'md' && (entry.content||'').includes('<')) ? `<button class="convert-btn" onclick="convertToMarkdown()" title="Преобразовать существующий HTML в Markdown">↺ В Markdown</button>` : ''}
+            </label>
+            <div class="fmt-toolbar" style="flex-shrink:0">
+              <div class="fmt-group">
+                <button class="fmt-btn" title="Абзац (Enter дважды)" onclick="fmt('p')">¶ Абзац</button>
+                <button class="fmt-btn fmt-bold" title="Жирный (Ctrl+B)" onclick="fmt('strong')"><strong>Ж</strong></button>
+                <button class="fmt-btn fmt-italic" title="Курсив (Ctrl+I)" onclick="fmt('em')"><em>К</em></button>
+                <button class="fmt-btn" title="Цитата" onclick="fmt('quote')">« Реплика</button>
+                <button class="fmt-btn" title="Подзаголовок" onclick="fmt('h')">⌘ Заголовок</button>
+                <button class="fmt-btn" title="Разделитель" onclick="fmt('hr')">— —</button>
+              </div>
+              <div class="fmt-sep"></div>
+              <div class="fmt-group">
+                <button class="fmt-btn fmt-dos" onclick="fmt('dossier-field')">＋ Поле</button>
+                <button class="fmt-btn fmt-dos" onclick="fmt('dossier-redacted')">█ Засекречено</button>
+                <button class="fmt-btn fmt-dos" onclick="fmt('dossier-header')">◈ Шапка</button>
+              </div>
+              <div class="fmt-sep"></div>
+              <span class="field-hint" style="font-size:.7rem">«/» — команды · Ctrl+S — сохранить · форматирование при вставке сохраняется</span>
+            </div>
+            <textarea id="fContent"  placeholder="${MD_PLACEHOLDER_T1}"
+              oninput="onContentInput()">${escHtml(entry.content || '')}</textarea>
+            <textarea id="fContent2" placeholder="${MD_PLACEHOLDER_T2}"
+              oninput="onContentInput()" style="display:none">${escHtml(entry.content2 || '')}</textarea>
+            <textarea id="fContent3" placeholder="${MD_PLACEHOLDER_T3}"
+              oninput="schedulePreview()" style="display:none">${escHtml(entry.content3 || '')}</textarea>
+          </div>
+        </div>
+        <div id="previewPane" style="display:none">
+          <div class="preview-rendered ${isDossier ? 'dossier-preview' : ''}" id="previewContent"></div>
+        </div>
+      </div>
+    </div>
+    <div class="split-form-actions">
+      <button class="btn btn-primary" onclick="${isNew ? 'createEntry()' : 'saveEntry()'}">${isNew ? 'Создать запись' : 'Сохранить'}</button>
+      <button class="btn btn-secondary" onclick="showWelcome()">Отмена</button>
+      ${!isNew ? `<button class="btn btn-danger" style="margin-left:auto" onclick='deleteEntry(${JSON.stringify(entry.id)})'>Удалить</button>` : ''}
+    </div>
+  </div>
+  `;
+
+  // After form is in DOM, initialize state
+  initFormatToggle();
+  attachContentListeners();
+  updateTierVisibility();
+}
+
+const STATUS_HINTS = {
+  npcs:       'напр. В заключении · Погиб · Пропал без вести · Бежал',
+  factions:   'напр. Активна · Запрещена · Распалась · Под наблюдением',
+  locations:  'напр. Безопасно · Под охраной · Запретный квартал · Заброшено',
+  artifacts:  'напр. Обычный · Необычный · Редкий · Очень редкий · Легендарный',
+  religion:   'напр. Официальный культ · Запрещён · Терпимый',
+  chronicles: 'напр. Подтверждено · Предание · Спорно',
+  rumors:     'напр. Актуально · Устарело · Опровергнуто',
+  sessions:   '',
+  dossiers:   '',
+};
+
+const MD_PLACEHOLDER_T1 = `Тир 1 — базовая информация.
+
+Markdown: пустая строка = новый абзац. **жирный**, *курсив*, ## подзаголовок, > цитата, --- разделитель.
+
+Введите «/» в начале строки — откроется меню вставок.`;
+
+const MD_PLACEHOLDER_T2 = `Тир 2 — дополнительные детали (необязательно).
+
+Открывается, когда игроки заработали следующий уровень доступа.`;
+
+const MD_PLACEHOLDER_T3 = `Тир 3 — полная информация (необязательно).
+
+Самые секретные сведения, доступные только высшему уровню допуска.`;
+
+function onCategoryChange() {
+  const cat = document.getElementById('fCategory')?.value;
+  const hint = STATUS_HINTS[cat] || '';
+  const input = document.getElementById('fStatus');
+  if (input) input.placeholder = hint || 'Статус или метка...';
+}
+
+function updateStatusPreview() {
+  const val = document.getElementById('fStatus')?.value.trim() || '';
+  const el = document.getElementById('statusPreviewWrap');
+  if (el) el.innerHTML = val ? `<span class="status-badge-preview">${val}</span>` : '';
+}
+
+function updatePublicBadge() {
+  const checked = document.getElementById('fPublic').checked;
+  document.getElementById('publicLabel').textContent =
+    checked ? 'Публичная запись' : 'Закрыта (требует пароль)';
+}
+
+let previewTimer = null;
+function schedulePreview() {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(renderPreview, 400);
+}
+
+let activeTier = 1;
+
+function switchContentTab(tier) {
+  activeTier = tier;
+  [1,2,3].forEach(t => {
+    const btn = document.getElementById('tabT'+t);
+    const ta = document.getElementById('fContent'+(t===1?'':t));
+    if (btn) btn.classList.toggle('active', t === tier);
+    if (ta) ta.style.display = t === tier ? '' : 'none';
+  });
+  const lbl = document.getElementById('tierEditLabel');
+  if (lbl) lbl.textContent = (tier === 1 ? 'Содержимое (Тир 1)' : `Содержимое (Тир ${tier}) — дополняет предыдущий`);
+  document.getElementById('editPane').style.display = '';
+  document.getElementById('previewPane').style.display = 'none';
+  document.getElementById('tabPreview').classList.remove('active');
+  previewMode = 'edit';
+}
+
+function switchPreviewTab(mode) {
+  previewMode = mode;
+  [1,2,3].forEach(t => {
+    const btn = document.getElementById('tabT'+t);
+    if (btn) btn.classList.toggle('active', false);
+  });
+  document.getElementById('tabPreview').classList.toggle('active', mode === 'preview');
+  document.getElementById('editPane').style.display = mode === 'edit' ? '' : 'none';
+  document.getElementById('previewPane').style.display = mode === 'preview' ? '' : 'none';
+  if (mode === 'preview') renderPreview();
+}
+
+function renderPreview() {
+  const t1 = document.getElementById('fContent')?.value || '';
+  const t2 = document.getElementById('fContent2')?.value || '';
+  const t3 = document.getElementById('fContent3')?.value || '';
+  const parts = [t1, t2, t3].filter(t => t.trim());
+  const html = parts.length > 1
+    ? parts.map((t,i) => `<div style="margin-bottom:1rem"><strong style="font-size:.7rem;opacity:.5">ТИР ${i+1}</strong>${t}</div>`).join('')
+    : (t1 || '');
+  const el = document.getElementById('previewContent');
+  if (el) el.innerHTML = html;
+}
+
+// ── CRUD ───────────────────────────────────────────────────────────
+async function createEntry() {
+  const id = document.getElementById('fId').value.trim();
+  const title = document.getElementById('fTitle').value.trim();
+  const category = document.getElementById('fCategory').value;
+  const fPublicEl = document.getElementById('fPublic');
+  const isPublic = fPublicEl.type === 'hidden' ? true : fPublicEl.checked;
+  const content = document.getElementById('fContent').value;
+  const status = document.getElementById('fStatus').value.trim();
+
+  if (!id || !title) { toast('Заполните ID и заголовок', 'error'); return; }
+  if (!/^[a-z0-9-]+$/.test(id)) { toast('ID: только строчные латинские буквы, цифры и дефисы', 'error'); return; }
+
+  if (data.entries.find(e => e.id === id)) {
+    toast('ID уже существует', 'error'); return;
+  }
+  const newEntry = { id, title, category, public: isPublic, content, status, ...collectEntryFields() };
+  data.entries.push(newEntry);
+  setStatus('Сохранение...', 'saving');
+  try {
+    await writeToGitHub(`Add: ${title}`);
+    isDirty = false;
+    activeCatId = category;
+    activeEntryId = null;
+    buildSidebar();
+    selectEntry(id);
+    setStatus('Сохранено', 'saved');
+    toast('Запись создана', 'success');
+  } catch(e) {
+    data.entries.splice(data.entries.indexOf(newEntry), 1);
+    setStatus('Ошибка', 'error');
+    toast('Ошибка GitHub: ' + e.message, 'error');
+  }
+}
+
+async function saveEntry() {
+  const title = document.getElementById('fTitle').value.trim();
+  const category = document.getElementById('fCategory').value;
+  const fPublicEl = document.getElementById('fPublic');
+  const isPublic = fPublicEl.type === 'hidden' ? true : fPublicEl.checked;
+  const content = document.getElementById('fContent').value;
+  const status = document.getElementById('fStatus').value.trim();
+
+  if (!title) { toast('Заполните заголовок', 'error'); return; }
+
+  const idx = data.entries.findIndex(e => e.id === activeEntryId);
+  if (idx === -1) { toast('Запись не найдена', 'error'); return; }
+  const old = { ...data.entries[idx] };
+  data.entries[idx] = { id: activeEntryId, title, category, public: isPublic, content, status, ...collectEntryFields() };
+  setStatus('Сохранение...', 'saving');
+  try {
+    await writeToGitHub(`Update: ${title}`);
+    isDirty = false;
+    activeCatId = category;
+    buildSidebar();
+    showEntryForm(data.entries[idx]);
+    setStatus('Сохранено', 'saved');
+    toast('Сохранено', 'success');
+    setTimeout(() => setStatus(''), 3000);
+  } catch(e) {
+    data.entries[idx] = old;
+    setStatus('Ошибка', 'error');
+    toast('Ошибка GitHub: ' + e.message, 'error');
+  }
+}
+
+async function deleteEntry(id) {
+  const ok = await confirm('Удалить запись?', 'Это действие необратимо. Запись будет удалена из архива.');
+  if (!ok) return;
+
+  const entryIdx = data.entries.findIndex(e => e.id === id);
+  const removed = data.entries.splice(entryIdx, 1)[0];
+  setStatus('Удаление...', 'saving');
+  try {
+    await writeToGitHub(`Delete: ${id}`);
+    isDirty = false;
+    activeEntryId = null;
+    buildSidebar();
+    showWelcome();
+    setStatus('');
+    toast('Запись удалена');
+  } catch(e) {
+    data.entries.splice(entryIdx, 0, removed);
+    setStatus('Ошибка', 'error');
+    toast('Ошибка GitHub: ' + e.message, 'error');
+  }
+}
+
+// ── PASSWORDS TAB — accessible via category "Пароли" hint ─────────
+// Show passwords manager when user clicks the ⚙ passwords section
+// We expose it as a special panel via a nav button added to topbar
+function showPasswordsPanel() {
+  document.getElementById('mainPanel').className = 'main-panel';
+  activeEntryId = null;
+  buildSidebar();
+
+  const pwRows = Object.entries(data.passwords || {}).map(([phrase, ids], i) => `
+    <div class="pw-row" data-idx="${i}">
+      <input type="text" class="pw-phrase" value="${escHtml(phrase)}" placeholder="кодовая фраза">
+      <input type="text" class="pw-ids" value="${ids.join(', ')}" placeholder="id-1, id-2">
+      <button class="btn-icon danger" onclick="removePwRow(this)">✕</button>
+    </div>`).join('');
+
+  document.getElementById('mainPanel').innerHTML = `
+    <div class="form-section">
+      <div class="form-section-title">🔑 Управление паролями</div>
+      <p style="font-size:.8rem;color:var(--text-dim);margin-bottom:1rem;line-height:1.6">
+        Каждый пароль — арабская фраза латиницей. Укажи ID записей через запятую.
+        Один пароль может открывать несколько записей.
+      </p>
+      <div class="pw-list" id="pwList">${pwRows}</div>
+      <button class="btn btn-secondary" style="font-size:.78rem" onclick="addPwRow()">+ Добавить пароль</button>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="savePasswords()">Сохранить пароли</button>
+    </div>
+  `;
+}
+
+function addPwRow() {
+  const list = document.getElementById('pwList');
+  const row = document.createElement('div');
+  row.className = 'pw-row';
+  row.innerHTML = `
+    <input type="text" class="pw-phrase" placeholder="кодовая фраза">
+    <input type="text" class="pw-ids" placeholder="id-1, id-2">
+    <button class="btn-icon danger" onclick="removePwRow(this)">✕</button>`;
+  list.appendChild(row);
+}
+
+function removePwRow(btn) { btn.closest('.pw-row').remove(); }
+
+async function savePasswords() {
+  const rows = document.querySelectorAll('.pw-row');
+  const passwords = {};
+  rows.forEach(row => {
+    const phrase = row.querySelector('.pw-phrase').value.trim().toLowerCase();
+    const ids = row.querySelector('.pw-ids').value.split(',').map(s => s.trim()).filter(Boolean);
+    if (phrase && ids.length) passwords[phrase] = ids;
+  });
+
+  const oldPasswords = { ...data.passwords };
+  data.passwords = passwords;
+  setStatus('Сохранение...', 'saving');
+  try {
+    await writeToGitHub('Update passwords');
+    setStatus('Сохранено', 'saved');
+    toast('Пароли сохранены', 'success');
+    setTimeout(() => setStatus(''), 3000);
+  } catch(e) {
+    data.passwords = oldPasswords;
+    setStatus('Ошибка', 'error');
+    toast('Ошибка GitHub: ' + e.message, 'error');
+  }
+}
+
+// Add passwords button to topbar after login
+document.getElementById('app').addEventListener('click', () => {}, true);
+setTimeout(() => {
+  const topbar = document.querySelector('.topbar');
+  if (topbar) {
+    const pwBtn = document.createElement('button');
+    pwBtn.className = 'topbar-link';
+    pwBtn.style.cursor = 'pointer';
+    pwBtn.textContent = '🔑 Пароли';
+    pwBtn.onclick = showPasswordsPanel;
+    topbar.insertBefore(pwBtn, topbar.querySelector('.topbar-link'));
+  }
+}, 100);
+
+// ── CONFIRM DIALOG ─────────────────────────────────────────────────
+function confirm(title, msg) {
+  return new Promise(resolve => {
+    confirmCb = resolve;
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMsg').textContent = msg;
+    document.getElementById('confirmOverlay').classList.add('open');
+  });
+}
+function confirmResolve(val) {
+  document.getElementById('confirmOverlay').classList.remove('open');
+  if (confirmCb) { confirmCb(val); confirmCb = null; }
+}
+
+// ── TOAST ──────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+
+// ── FORMAT (Markdown / HTML aware) ─────────────────────────────────
+function getActiveTextarea() {
+  const taId = activeTier > 1 ? 'fContent'+activeTier : 'fContent';
+  return document.getElementById(taId);
+}
+
+function getCurrentFormat() {
+  return document.getElementById('fFormat')?.value || 'md';
+}
+
+const MD_INSERTS = {
+  p:        (sel, fmt) => fmt === 'md' ? `\n\n${sel || 'Новый абзац.'}\n\n` : (sel ? `<p>${sel}</p>` : '<p></p>'),
+  strong:   (sel, fmt) => fmt === 'md' ? `**${sel || 'текст'}**` : (sel ? `<strong>${sel}</strong>` : '<strong>текст</strong>'),
+  em:       (sel, fmt) => fmt === 'md' ? `*${sel || 'текст'}*` : (sel ? `<em>${sel}</em>` : '<em>текст</em>'),
+  quote:    (sel, fmt) => fmt === 'md'
+              ? `\n\n> ${sel || '— Реплика персонажа.'}\n\n`
+              : (sel ? `<p><em>— ${sel}</em></p>` : '<p><em>— Реплика персонажа.</em></p>'),
+  h:        (sel, fmt) => fmt === 'md' ? `\n\n## ${sel || 'Подзаголовок'}\n\n` : `<p><strong>${sel || 'Подзаголовок'}</strong></p>`,
+  hr:       (_,   fmt) => fmt === 'md' ? `\n\n---\n\n` : `<hr>`,
+  // Dossier blocks: same HTML in both modes — Markdown engine passes raw HTML through.
+  'dossier-field':    () => `\n<div class="dossier-field">\n  <span class="dossier-label">МЕТКА</span>\n  <span>Текст поля.</span>\n</div>\n`,
+  'dossier-redacted': () => `\n<div class="dossier-redacted">█████████████████████████████████████</div>\n`,
+  'dossier-header':   () => `<div class="dossier-header">\n  <div class="dossier-stamp">АСАС АЛЬ-СИРР</div>\n  <div class="dossier-meta">\n    <span>КЛАССИФИКАЦИЯ: УРОВЕНЬ 3</span>\n    <span>СТАТУС: НАБЛЮДЕНИЕ</span>\n    <span>ДЕЛ. № XXX / 1207 НН</span>\n  </div>\n</div>\n`,
+};
+
+function fmt(type) {
+  const ta = getActiveTextarea();
+  if (!ta) return;
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  const selected = ta.value.substring(start, end).trim();
+  const fn = MD_INSERTS[type];
+  if (!fn) return;
+  const insert = fn(selected, getCurrentFormat());
+  const before = ta.value.substring(0, start);
+  const after = ta.value.substring(end);
+  ta.value = before + insert + after;
+  const newPos = start + insert.length;
+  ta.selectionStart = newPos;
+  ta.selectionEnd = newPos;
+  ta.focus();
+  schedulePreview();
+}
+
+// ── MARKDOWN ENGINE ────────────────────────────────────────────────
+// Tiny converter: paragraphs, **bold**, *italic*, ## headings, > quotes,
+// --- separators, [link](url). HTML blocks (e.g. <div class="dossier-field">)
+// are passed through untouched.
+function mdToHtml(src) {
+  if (!src) return '';
+  // Normalize line endings, trim outer whitespace
+  let s = src.replace(/\r\n?/g, '\n').replace(/^\n+|\n+$/g, '');
+  // Split by blank lines into blocks
+  const blocks = s.split(/\n{2,}/);
+  const out = [];
+  for (let block of blocks) {
+    const trimmed = block.trim();
+    if (!trimmed) continue;
+    // Raw HTML block (starts with < and looks like a tag) — pass through
+    if (/^<[a-zA-Z!\/]/.test(trimmed)) {
+      out.push(trimmed); continue;
+    }
+    // Heading
+    if (/^#{1,3}\s+/.test(trimmed)) {
+      const m = trimmed.match(/^(#{1,3})\s+(.*)$/);
+      const level = Math.min(m[1].length + 2, 4); // ## -> h4-ish; we use <strong> for visual fit
+      out.push(`<p><strong>${inline(m[2])}</strong></p>`);
+      continue;
+    }
+    // Horizontal rule
+    if (/^---+$/.test(trimmed)) {
+      out.push(`<hr>`); continue;
+    }
+    // Blockquote (one or more > prefixed lines)
+    if (/^>\s?/.test(trimmed)) {
+      const lines = trimmed.split('\n').map(l => l.replace(/^>\s?/, '')).join(' ');
+      out.push(`<p><em>— ${inline(lines)}</em></p>`);
+      continue;
+    }
+    // Paragraph: collapse internal newlines into spaces
+    out.push(`<p>${inline(trimmed.replace(/\n/g, ' '))}</p>`);
+  }
+  return out.join('\n');
+
+  function inline(s) {
+    // Order matters: links → bold → italic
+    return s
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+  }
+}
+
+function detectFormat(entry) {
+  // If author already saved with a format flag, trust it
+  if (entry.format === 'md' || entry.format === 'html') return entry.format;
+  // If content has any HTML tag, assume HTML (legacy entries)
+  const c = (entry.content || '') + (entry.content2 || '') + (entry.content3 || '');
+  return /<[a-zA-Z][^>]*>/.test(c) ? 'html' : 'md';
+}
+
+function setFormat(f) {
+  const hidden = document.getElementById('fFormat');
+  if (hidden) hidden.value = f;
+  document.getElementById('fmtMd')?.classList.toggle('active', f === 'md');
+  document.getElementById('fmtHtml')?.classList.toggle('active', f === 'html');
+  schedulePreview();
+}
+
+function initFormatToggle() {
+  const f = getCurrentFormat();
+  setFormat(f);
+}
+
+// ── HTML → MARKDOWN converter (best-effort migration helper) ───────
+// ── HTML → MARKDOWN (DOM-walking, paste-friendly) ──────────────────
+// Handles: <p>, <h1>-<h6>, <strong>/<b>, <em>/<i>, <a>, <blockquote>,
+// <ul>/<ol>/<li>, <hr>, <br>, <code>, <pre>, plus span styles like
+// font-weight:bold and font-style:italic (Google Docs uses these).
+function htmlToMd(html) {
+  if (!html) return '';
+  // Parse into a real DOM so nested structures work
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  const root = tpl.content;
+
+  // Strip Google Docs / Office wrappers and noise
+  root.querySelectorAll('style, script, meta, head, title').forEach(n => n.remove());
+  // Google Docs wraps everything in <b style="font-weight:normal"> — neutralize that
+  root.querySelectorAll('b[style*="font-weight:normal"], b[style*="font-weight: normal"]').forEach(b => {
+    const span = document.createElement('span');
+    while (b.firstChild) span.appendChild(b.firstChild);
+    b.replaceWith(span);
+  });
+
+  function walk(node) {
+    // Text node
+    if (node.nodeType === 3) {
+      // Collapse internal whitespace runs (browsers preserve them; markdown doesn't need them)
+      return node.textContent.replace(/[\t ]+/g, ' ').replace(/\n+/g, ' ');
+    }
+    // Element node
+    if (node.nodeType !== 1) return '';
+
+    const tag = node.tagName.toLowerCase();
+    const inner = () => Array.from(node.childNodes).map(walk).join('');
+
+    // Style-based bold/italic (common from Google Docs and rich-text editors)
+    const style = (node.getAttribute('style') || '').toLowerCase();
+    const styleBold   = /font-weight:\s*(bold|[6-9]\d\d|1000)/.test(style);
+    const styleItalic = /font-style:\s*italic/.test(style);
+
+    switch (tag) {
+      case 'br':         return '\n';
+      case 'hr':         return '\n\n---\n\n';
+      case 'p':          return '\n\n' + inner().trim() + '\n\n';
+      case 'div':        return '\n' + inner().trim() + '\n';
+      case 'h1': case 'h2': case 'h3':
+      case 'h4': case 'h5': case 'h6':
+        return '\n\n## ' + inner().trim() + '\n\n';
+      case 'strong': case 'b':
+        // Skip empty bold wrappers
+        { const t = inner().trim(); return t ? `**${t}**` : ''; }
+      case 'em': case 'i':
+        { const t = inner().trim(); return t ? `*${t}*` : ''; }
+      case 'u':          return inner(); // underline → drop (no MD equivalent we want)
+      case 'code':       return '`' + inner() + '`';
+      case 'pre':        return '\n\n' + inner().trim() + '\n\n';
+      case 'a': {
+        const href = node.getAttribute('href') || '';
+        const text = inner().trim();
+        if (!href || href.startsWith('#')) return text;
+        // Google Docs wraps links with redirect URLs; try to extract real one
+        const m = href.match(/[?&]q=([^&]+)/);
+        const realHref = m ? decodeURIComponent(m[1]) : href;
+        return text ? `[${text}](${realHref})` : '';
+      }
+      case 'blockquote':
+        return '\n\n' + inner().trim().split('\n').map(l => '> ' + l).join('\n') + '\n\n';
+      case 'ul': case 'ol': {
+        const items = Array.from(node.children).filter(c => c.tagName.toLowerCase() === 'li');
+        return '\n\n' + items.map((li, i) => {
+          const prefix = tag === 'ol' ? `${i + 1}. ` : '- ';
+          // Strip surrounding paragraph whitespace inside <li>
+          return prefix + Array.from(li.childNodes).map(walk).join('').trim();
+        }).join('\n') + '\n\n';
+      }
+      case 'li':         return inner(); // handled by parent ul/ol, fallback
+      case 'span': {
+        let t = inner();
+        if (styleBold && t.trim())   t = `**${t.trim()}**`;
+        else if (styleItalic && t.trim()) t = `*${t.trim()}*`;
+        return t;
+      }
+      default:
+        // Apply span-style bold/italic to other inline-ish tags too
+        let t = inner();
+        if (styleBold && t.trim())   t = `**${t.trim()}**`;
+        else if (styleItalic && t.trim()) t = `*${t.trim()}*`;
+        return t;
+    }
+  }
+
+  let out = Array.from(root.childNodes).map(walk).join('');
+  // Cleanup: collapse 3+ newlines, trim. (We deliberately don't try to "fix"
+  // patterns like ****bold*** because they may be legitimate nested **/*.)
+  out = out.replace(/\n{3,}/g, '\n\n').trim();
+  // Decode HTML entities that the parser might have left (rare but possible)
+  out = out.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+  return out;
+}
+
+// ── PASTE HANDLER ──────────────────────────────────────────────────
+// Intercept paste on content textareas. If the clipboard has HTML, convert
+// to Markdown (or keep as HTML if the user is in HTML mode) and insert.
+// Otherwise let the browser paste plain text normally.
+function handleContentPaste(e) {
+  const cd = e.clipboardData || window.clipboardData;
+  if (!cd) return; // very old browser, fall through
+  const html = cd.getData('text/html');
+  const text = cd.getData('text/plain');
+
+  // Nothing to do if there's no HTML version — let default paste happen
+  if (!html || !html.trim()) return;
+
+  e.preventDefault();
+  const ta = e.target;
+  const fmt = getCurrentFormat();
+  let toInsert;
+
+  if (fmt === 'md') {
+    toInsert = htmlToMd(html);
+  } else {
+    // HTML mode: strip dangerous wrappers but keep tags
+    const tpl = document.createElement('template');
+    tpl.innerHTML = html;
+    tpl.content.querySelectorAll('style, script, meta, head, title').forEach(n => n.remove());
+    toInsert = tpl.innerHTML.trim();
+  }
+
+  // Fallback: if conversion produced nothing usable, use the plain-text version
+  if (!toInsert.trim() && text) toInsert = text;
+
+  // Insert at cursor / replace selection
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  ta.value = ta.value.substring(0, start) + toInsert + ta.value.substring(end);
+  const newPos = start + toInsert.length;
+  ta.selectionStart = ta.selectionEnd = newPos;
+  ta.focus();
+  isDirty = true;
+  schedulePreview();
+  if (typeof refreshTierCap === 'function') refreshTierCap();
+}
+
+async function convertToMarkdown() {
+  const ok = await confirm('Преобразовать в Markdown?',
+    'Будут конвертированы все три тира этой записи. HTML-блоки (досье, поля) сохранятся как есть. Это нельзя отменить кнопкой назад.');
+  if (!ok) return;
+  ['fContent','fContent2','fContent3'].forEach(id => {
+    const ta = document.getElementById(id);
+    if (ta) ta.value = htmlToMd(ta.value);
+  });
+  setFormat('md');
+  toast('Преобразовано в Markdown', 'success');
+  schedulePreview();
+}
+
+// ── PREVIEW (now format-aware) ─────────────────────────────────────
+function renderContentForPreview(text) {
+  return getCurrentFormat() === 'md' ? mdToHtml(text) : text;
+}
+
+// Override the original renderPreview to use the format-aware path
+function renderPreview() {
+  const t1 = document.getElementById('fContent')?.value || '';
+  const t2 = document.getElementById('fContent2')?.value || '';
+  const t3 = document.getElementById('fContent3')?.value || '';
+  const parts = [t1, t2, t3].filter(t => t.trim()).map(renderContentForPreview);
+  const html = parts.length > 1
+    ? parts.map((t,i) => `<div style="margin-bottom:1rem"><strong style="font-size:.7rem;opacity:.5">ТИР ${i+1}</strong>${t}</div>`).join('')
+    : (parts[0] || '');
+  const el = document.getElementById('previewContent');
+  if (el) el.innerHTML = html;
+}
+
+// ── CONTENT INPUT (track dirty + slash-command + preview debounce) ─
+let isDirty = false;
+function onContentInput() {
+  isDirty = true;
+  schedulePreview();
+}
+
+function attachContentListeners() {
+  ['fContent','fContent2','fContent3'].forEach(id => {
+    const ta = document.getElementById(id);
+    if (!ta) return;
+    ta.addEventListener('keydown', handleEditorKeydown);
+    ta.addEventListener('input', maybeOpenSlashPopup);
+    ta.addEventListener('blur', () => setTimeout(closeSlashPopup, 150));
+    ta.addEventListener('paste', handleContentPaste);
+  });
+  // Mark form fields dirty too
+  ['fTitle','fStatus','fIdeal','fBond','fFlaw','fLifeStatus','fAdventure','fSubtitle',
+   'fRegion','fPlaceType','fTagline','fPublic','fCategory','fRarity','fMaxTier']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', () => isDirty = true);
+      if (el) el.addEventListener('change', () => isDirty = true);
+    });
+  // Auto-cap tier slider to actually filled tiers
+  refreshTierCap();
+  ['fContent','fContent2','fContent3'].forEach(id => {
+    const ta = document.getElementById(id);
+    if (ta) ta.addEventListener('input', refreshTierCap);
+  });
+}
+
+function setMaxTier(n) {
+  const hidden = document.getElementById('fMaxTier');
+  if (hidden) hidden.value = n;
+  [1, 2, 3].forEach(i => {
+    const btn = document.getElementById('tierBtn' + i);
+    if (btn) btn.classList.toggle('active', i <= n);
+  });
+  isDirty = true;
+}
+
+function refreshTierCap() {
+  const t2 = document.getElementById('fContent2')?.value.trim() || '';
+  const t3 = document.getElementById('fContent3')?.value.trim() || '';
+  const max = t3 ? 3 : t2 ? 2 : 1;
+  const hidden = document.getElementById('fMaxTier');
+  if (!hidden) return;
+  const current = parseInt(hidden.value) || 1;
+  if (current > max) setMaxTier(max);
+  [1, 2, 3].forEach(i => {
+    const btn = document.getElementById('tierBtn' + i);
+    if (btn) btn.disabled = i > max;
+  });
+}
+
+function updateTierLabel() { /* no-op: replaced by tier buttons */ }
+
+// ── KEYBOARD SHORTCUTS ─────────────────────────────────────────────
+function handleEditorKeydown(e) {
+  // Ctrl/Cmd + S — save
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    if (slashOpen) closeSlashPopup();
+    if (activeEntryId) saveEntry();
+    else if (document.getElementById('fId')) createEntry();
+    return;
+  }
+  // Ctrl + B — bold
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
+    e.preventDefault(); fmt('strong'); return;
+  }
+  // Ctrl + I — italic
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'i' || e.key === 'I')) {
+    e.preventDefault(); fmt('em'); return;
+  }
+  // Slash popup nav
+  if (slashOpen) {
+    if (e.key === 'ArrowDown') { e.preventDefault(); moveSlashSelection(1); return; }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); moveSlashSelection(-1); return; }
+    if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault(); applySlashSelection(); return;
+    }
+    if (e.key === 'Escape') { e.preventDefault(); closeSlashPopup(); return; }
+  }
+  // Esc cancels
+  if (e.key === 'Escape') {
+    if (slashOpen) closeSlashPopup();
+  }
+}
+
+// ── SLASH COMMAND POPUP ────────────────────────────────────────────
+const SLASH_COMMANDS = [
+  { key: 'h',                label: 'Подзаголовок',     hint: '## ',     icon: '⌘' },
+  { key: 'quote',            label: 'Цитата',           hint: '> …',     icon: '«' },
+  { key: 'hr',               label: 'Разделитель',      hint: '---',     icon: '—' },
+  { key: 'strong',           label: 'Жирный',           hint: '**…**',   icon: 'Ж' },
+  { key: 'em',               label: 'Курсив',           hint: '*…*',     icon: 'К' },
+  { key: 'dossier-field',    label: 'Поле досье',       hint: 'METKA: …',icon: '＋' },
+  { key: 'dossier-redacted', label: 'Засекречено',      hint: '████',    icon: '█' },
+  { key: 'dossier-header',   label: 'Шапка досье',      hint: 'АСАС',    icon: '◈' },
+];
+
+let slashOpen = false;
+let slashSelected = 0;
+let slashTextarea = null;
+let slashAnchorPos = 0; // textarea char offset where the '/' lives
+let slashFilter = '';
+
+function maybeOpenSlashPopup(e) {
+  const ta = e.target;
+  if (!ta || ta.tagName !== 'TEXTAREA') return;
+  const pos = ta.selectionStart;
+  // Look back from cursor for the slash that started this command, stopping at whitespace
+  const upto = ta.value.substring(0, pos);
+  const m = upto.match(/(?:^|\n|\s)\/([a-zа-я]*)$/i);
+  if (m) {
+    slashTextarea = ta;
+    slashAnchorPos = pos - (m[0].length - (m[0].startsWith('/') ? 0 : 1));
+    // Recompute exact slash position: end of upto minus filter length minus 1 ('/')
+    slashAnchorPos = pos - m[1].length - 1;
+    slashFilter = m[1].toLowerCase();
+    slashSelected = 0;
+    openSlashPopup();
+  } else if (slashOpen) {
+    closeSlashPopup();
+  }
+}
+
+function openSlashPopup() {
+  const popup = document.getElementById('slashPopup');
+  const items = SLASH_COMMANDS.filter(c =>
+    !slashFilter ||
+    c.key.toLowerCase().includes(slashFilter) ||
+    c.label.toLowerCase().includes(slashFilter)
+  );
+  if (!items.length) { closeSlashPopup(); return; }
+  slashOpen = true;
+  slashSelected = Math.min(slashSelected, items.length - 1);
+  popup.innerHTML = items.map((c, i) => `
+    <div class="slash-item ${i === slashSelected ? 'selected' : ''}" data-key="${c.key}" data-idx="${i}"
+         onmousedown="event.preventDefault();applySlashKey('${c.key}')">
+      <span class="slash-item-icon">${c.icon}</span>
+      <span class="slash-item-label">${c.label}</span>
+      <span class="slash-item-hint">${c.hint}</span>
+    </div>`).join('');
+  popup.classList.add('open');
+  positionSlashPopup();
+}
+
+function positionSlashPopup() {
+  if (!slashTextarea) return;
+  const popup = document.getElementById('slashPopup');
+  const r = slashTextarea.getBoundingClientRect();
+  // Best-effort: position near top-left of textarea, slightly indented
+  popup.style.left = (window.scrollX + r.left + 12) + 'px';
+  popup.style.top  = (window.scrollY + r.top + 32) + 'px';
+}
+
+function moveSlashSelection(delta) {
+  const items = document.querySelectorAll('#slashPopup .slash-item');
+  if (!items.length) return;
+  slashSelected = (slashSelected + delta + items.length) % items.length;
+  items.forEach((el, i) => el.classList.toggle('selected', i === slashSelected));
+}
+
+function applySlashSelection() {
+  const items = document.querySelectorAll('#slashPopup .slash-item');
+  const el = items[slashSelected];
+  if (!el) { closeSlashPopup(); return; }
+  applySlashKey(el.dataset.key);
+}
+
+function applySlashKey(key) {
+  if (!slashTextarea) { closeSlashPopup(); return; }
+  // Remove the "/<filter>" trigger text first
+  const ta = slashTextarea;
+  const triggerLen = 1 + slashFilter.length;
+  const before = ta.value.substring(0, slashAnchorPos);
+  const after  = ta.value.substring(slashAnchorPos + triggerLen);
+  ta.value = before + after;
+  ta.selectionStart = ta.selectionEnd = slashAnchorPos;
+  closeSlashPopup();
+  fmt(key);
+}
+
+function closeSlashPopup() {
+  slashOpen = false;
+  slashTextarea = null;
+  slashFilter = '';
+  document.getElementById('slashPopup')?.classList.remove('open');
+}
+
+// ── UNSAVED CHANGES GUARD ──────────────────────────────────────────
+async function confirmDiscardIfDirty() {
+  if (!isDirty) return true;
+  return await confirm('Несохранённые изменения',
+    'У вас есть несохранённые правки. Покинуть запись и потерять их?');
+}
+
+// Window-level beforeunload
+window.addEventListener('beforeunload', e => {
+  if (isDirty) { e.preventDefault(); e.returnValue = ''; }
+});
+
+// ── SIDEBAR SEARCH ─────────────────────────────────────────────────
+// `applySidebarSearch` is called from within buildSidebar() after it renders
+// the entry list. Adds the filter input on first run and applies the filter
+// to whichever items are present.
+let entryFilter = '';
+function applySidebarSearch() {
+  if (!document.getElementById('entryFilter')) {
+    const sidebar = document.querySelector('.sidebar');
+    const filterWrap = document.createElement('div');
+    filterWrap.style.padding = '.5rem .8rem';
+    filterWrap.style.borderBottom = '1px solid var(--border)';
+    filterWrap.innerHTML = `
+      <input type="text" id="entryFilter" placeholder="Поиск по названию..."
+        style="width:100%;padding:.4rem .6rem;background:var(--surface2);
+        border:1px solid var(--border);border-radius:3px;color:var(--text);
+        font-size:.78rem;outline:none;font-family:inherit"
+        oninput="onEntryFilter(this.value)">`;
+    sidebar.insertBefore(filterWrap, document.querySelector('.entry-list'));
+  }
+  if (entryFilter) {
+    const list = document.getElementById('entryList');
+    if (!list) return;
+    const items = list.querySelectorAll('.entry-item');
+    let visible = 0;
+    const f = entryFilter.toLowerCase();
+    items.forEach(it => {
+      const t = it.querySelector('.entry-item-title')?.textContent.toLowerCase() || '';
+      const show = t.includes(f);
+      it.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    if (!visible && items.length) {
+      if (!list.querySelector('.entry-empty')) {
+        const empty = document.createElement('div');
+        empty.className = 'entry-empty';
+        empty.textContent = 'Ничего не найдено';
+        list.appendChild(empty);
+      }
+    }
+  }
+}
+
+function onEntryFilter(v) {
+  entryFilter = v.trim();
+  buildSidebar();
+}
+
+// ── GENDER ────────────────────────────────────────────────────────
+function setGender(g) {
+  document.getElementById('fGender').value = g;
+  document.querySelectorAll('.gender-btn').forEach(btn => {
+    const map = {'m':'М','f':'Ж','':'—'};
+    btn.classList.toggle('active', btn.textContent === map[g]);
+  });
+  isDirty = true;
+}
+
+// ── RARITY & TIER ─────────────────────────────────────────────────
+function setRarity(r) {
+  document.getElementById('fRarity').value = r;
+  document.querySelectorAll('.rarity-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.classList.contains('r-'+r));
+  });
+  updateTierVisibility();
+  isDirty = true;
+}
+
+function updateTierVisibility() {
+  const rarity = document.getElementById('fRarity')?.value || 'common';
+  const isCommon = rarity === 'common';
+  const t2 = document.getElementById('tabT2');
+  const t3 = document.getElementById('tabT3');
+  const sliderGroup = document.getElementById('tierSliderGroup');
+  if (t2) t2.style.display = isCommon ? 'none' : '';
+  if (t3) t3.style.display = isCommon ? 'none' : '';
+  if (sliderGroup) sliderGroup.style.display = isCommon ? 'none' : '';
+  if (isCommon && activeTier > 1) switchContentTab(1);
+}
+
+// ── UTILS ──────────────────────────────────────────────────────────
+function escHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+// For values placed inside HTML attribute values (also escapes quotes)
+function escAttr(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+</script>
+</body>
+</html>

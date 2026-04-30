@@ -1,0 +1,595 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Васаик аль-Фазар</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Courier+Prime:wght@400;700&family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sand:#e8dcc8;--sand-dark:#d4c4a8;--sand-deep:#c4aa84;--parchment:#f2ead8;
+  --ink:#0f0a04;--ink-faded:#3a2a14;--ink-light:#6a5030;
+  --copper:#b5621e;--copper-dim:#8a4a18;--teal:#2d6b6b;
+  --shadow:rgba(42,31,14,0.15);--shadow-deep:rgba(42,31,14,0.35);
+  --dos-bg:#f0ece4;--dos-paper:#e8e4dc;--dos-ink:#1a1a1a;
+  --dos-faded:#444;--dos-red:#8b0000;--dos-stamp:rgba(139,0,0,0.15);
+  /* Rarity */
+  --r-common:#c8c8c8;--r-common-bg:rgba(200,200,200,.08);
+  --r-uncommon:#1eff00;--r-uncommon-bg:rgba(30,255,0,.07);
+  --r-rare:#0070dd;--r-rare-bg:rgba(0,112,221,.08);
+  --r-epic:#a335ee;--r-epic-bg:rgba(163,53,238,.08);
+  --r-legendary:#ff8000;--r-legendary-bg:rgba(255,128,0,.09);
+  /* Card surfaces */
+  --card-bg:#3d3222;--card-bg-locked:#2a2318;
+  --card-text:#e8dcc8;--card-text-dim:#a09070;--card-text-faint:#6a5a3a;
+  --card-border:#4a3e2a;
+}
+html{scroll-behavior:smooth}
+body{background:var(--sand);color:var(--ink);font-family:'Noto Serif',Georgia,serif;font-size:18px;font-weight:400;line-height:1.75;min-height:100vh;
+  background-image:radial-gradient(ellipse at 20% 0%,rgba(181,98,30,.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(45,107,107,.06) 0%,transparent 60%)}
+
+/* HEADER */
+header{text-align:center;padding:3.5rem 2rem 2.5rem;position:relative;border-bottom:1px solid var(--sand-deep)}
+header::before{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:120px;height:1px;background:linear-gradient(90deg,transparent,var(--copper),transparent)}
+.site-eyebrow{font-family:'Cormorant Garamond',serif;font-size:.75rem;font-weight:400;letter-spacing:.35em;text-transform:uppercase;color:var(--ink-light);margin-bottom:.75rem}
+.site-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,6vw,3.8rem);font-weight:300;letter-spacing:.05em;color:var(--ink);line-height:1.1}
+.site-title em{font-style:italic;color:var(--copper)}
+.site-subtitle{margin-top:.6rem;font-size:.82rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faded);font-family:'Cormorant Garamond',serif}
+.ornament{display:block;text-align:center;font-size:1.1rem;color:var(--copper);opacity:.6;margin:1rem 0 0;letter-spacing:.5em}
+
+/* NAV */
+nav{display:flex;flex-wrap:wrap;justify-content:center;gap:.25rem;padding:1.25rem 2rem;background:rgba(212,196,168,.3);border-bottom:1px solid var(--sand-deep);position:sticky;top:0;z-index:100;backdrop-filter:blur(8px)}
+.nav-btn{background:none;border:1px solid transparent;padding:.4rem .9rem;font-family:'Cormorant Garamond',serif;font-size:.9rem;letter-spacing:.08em;color:var(--ink-faded);cursor:pointer;border-radius:2px;transition:all .2s;white-space:nowrap}
+.nav-btn:hover{color:var(--ink);border-color:var(--sand-deep);background:rgba(255,255,255,.3)}
+.nav-btn.active{color:var(--copper);border-color:var(--copper);background:rgba(181,98,30,.07)}
+
+/* MAIN */
+main{max-width:1100px;margin:0 auto;padding:2.5rem 2rem 4rem}
+.category-title{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300;letter-spacing:.12em;color:var(--ink-faded);text-transform:uppercase;margin-bottom:1.8rem;padding-bottom:.6rem;border-bottom:1px solid var(--sand-deep);display:flex;align-items:center;gap:.6rem}
+.category-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--sand-deep),transparent);margin-left:.5rem}
+
+/* GRID */
+.entries-grid{display:grid;grid-template-columns:repeat(auto-fill,320px);gap:1.2rem;margin-bottom:3.5rem}
+
+/* CARD */
+.entry-card{background:var(--card-bg);border:2px solid var(--r-common);border-radius:4px;padding:1.5rem;cursor:pointer;transition:all .25s;position:relative;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3);min-height:160px;box-sizing:border-box}
+.entry-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--copper);opacity:0;transition:opacity .25s}
+.entry-card:hover{box-shadow:0 6px 24px rgba(0,0,0,.45);transform:translateY(-2px)}
+.entry-card:hover::before{opacity:1}
+.entry-card.locked{cursor:pointer;background:var(--card-bg-locked);border:2px dashed var(--card-border);opacity:.65}
+.entry-card.locked:hover{opacity:.9;border-style:dashed;transform:none;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.entry-card.locked::before{display:none}
+.entry-title{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;color:var(--card-text);margin-bottom:.25rem;line-height:1.3}
+.entry-cat-tag{font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;color:var(--card-text-dim);font-family:'Cormorant Garamond',serif}
+.entry-subtitle{font-size:.8rem;color:var(--card-text-dim);font-style:italic;margin-top:.25rem;line-height:1.4}
+.entry-card.dossier-card .entry-subtitle{font-family:'Courier Prime',monospace;font-style:normal;font-size:.75rem}
+.entry-status{display:inline-block;margin-top:.5rem;font-size:.72rem;padding:.15rem .55rem;border-radius:10px;font-family:'Cormorant Garamond',serif;letter-spacing:.05em;font-style:italic;background:rgba(181,98,30,.2);color:var(--copper);border:1px solid rgba(181,98,30,.4)}
+.entry-card.dossier-card .entry-status{font-family:'Courier Prime',monospace;font-style:normal;font-size:.68rem;background:rgba(139,0,0,.15);color:#cc6666;border-color:rgba(139,0,0,.4)}
+.lock-icon{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem 0;gap:.4rem;color:var(--card-text-faint)}
+.lock-icon svg{width:28px;height:28px;opacity:.4}
+.lock-label{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;font-family:'Cormorant Garamond',serif;color:var(--card-text-faint)}
+
+/* SESSION NUMBER */
+.session-number{display:inline-block;font-size:.85rem;letter-spacing:.12em;text-transform:uppercase;font-family:'Cormorant Garamond',serif;font-weight:600;margin-bottom:.3rem;color:var(--copper)}
+
+/* CARD FACTION */
+.card-faction{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;font-family:'Cormorant Garamond',serif;color:var(--copper);opacity:.75;margin-top:.4rem}
+
+/* RARITY */
+.rarity-badge{display:inline-block;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;font-family:'Cormorant Garamond',serif;font-weight:600;margin-bottom:.3rem}
+.r-common .rarity-badge{color:#ffffff}
+.r-uncommon .rarity-badge{color:var(--r-uncommon)}
+.r-rare .rarity-badge{color:var(--r-rare)}
+.r-epic .rarity-badge{color:var(--r-epic)}
+.r-legendary .rarity-badge{color:var(--r-legendary)}
+.r-uncommon{border:4px solid var(--r-uncommon)!important}
+.r-uncommon::before{background:var(--r-uncommon)!important;width:5px}
+.r-rare{border:4px solid var(--r-rare)!important}
+.r-rare::before{background:var(--r-rare)!important;width:5px}
+.r-epic{border:4px solid var(--r-epic)!important}
+.r-epic::before{background:var(--r-epic)!important;width:5px}
+.r-legendary{border:4px solid var(--r-legendary)!important;box-shadow:0 0 16px rgba(255,128,0,.2)}
+.r-legendary::before{background:var(--r-legendary)!important;width:5px}
+.r-legendary .entry-title{background:linear-gradient(90deg,#ff8000,#ffd700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* TIER INDICATOR */
+.tier-pips{display:flex;gap:3px;margin-top:.4rem}
+.tier-pip{width:8px;height:8px;border-radius:50%;background:var(--card-border);border:1px solid var(--card-border)}
+.tier-pip.unlocked{background:var(--copper);border-color:var(--copper)}
+.r-uncommon .tier-pip.unlocked{background:var(--r-uncommon);border-color:var(--r-uncommon)}
+.r-rare .tier-pip.unlocked{background:var(--r-rare);border-color:var(--r-rare)}
+.r-epic .tier-pip.unlocked{background:var(--r-epic);border-color:var(--r-epic)}
+.r-legendary .tier-pip.unlocked{background:var(--r-legendary);border-color:var(--r-legendary)}
+.r-legendary .tier-pip.unlocked{background:var(--r-legendary);border-color:var(--r-legendary)}
+
+/* TIER CONTENT in modal */
+.tier-section{margin-bottom:1.2rem}
+.tier-label{font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;font-family:'Cormorant Garamond',serif;color:var(--ink-light);margin-bottom:.5rem;padding-bottom:.3rem;border-bottom:1px solid var(--sand-deep)}
+
+/* DOSSIER CARD */
+.entry-card.dossier-card{background:#1a1410;border:2px solid #555;font-family:'Courier Prime',monospace;border-radius:0;box-shadow:3px 3px 0 rgba(0,0,0,.4)}
+.entry-card.dossier-card:hover{border-color:#cc4444;box-shadow:4px 4px 0 rgba(139,0,0,.3);transform:translateY(-1px)}
+.entry-card.dossier-card::before{background:#cc4444}
+.entry-card.dossier-card .entry-title{font-family:'Courier Prime',monospace;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#e0d8c8}
+.entry-card.dossier-card .entry-cat-tag{color:#cc4444;font-family:'Courier Prime',monospace}
+.entry-card.dossier-card.locked{background:#111008;border:2px dashed #444}
+
+/* LOCATION CARD */
+.entry-card.location-card{background:#2a2418;border-left:4px solid var(--copper)}
+.entry-card.location-card .place-type{font-family:'Cormorant Garamond',serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--copper);font-weight:600;margin-bottom:.2rem}
+.entry-card.location-card .place-region{display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--card-text-faint);font-style:italic;margin-top:.4rem;font-family:'Cormorant Garamond',serif;letter-spacing:.05em}
+.entry-card.location-card .place-region::before{content:'◈';font-style:normal;opacity:.6}
+.entry-card.location-card .entry-subtitle{margin-top:.3rem;font-size:.78rem}
+
+/* DEITY CARD */
+.deity-domain{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;font-family:'Cormorant Garamond',serif;color:var(--copper);opacity:.9;margin-top:.25rem}
+.deity-status{display:inline-block;margin-top:.5rem;font-size:.68rem;padding:.15rem .55rem;border-radius:10px;font-family:'Cormorant Garamond',serif;letter-spacing:.06em;font-style:italic;border:1px solid}
+.deity-s-state{background:rgba(255,215,0,.15);color:#d4aa00;border-color:rgba(255,215,0,.4)}
+.deity-s-allowed{background:rgba(80,180,80,.12);color:#4caf50;border-color:rgba(80,180,80,.35)}
+.deity-s-tolerated{background:rgba(150,150,150,.12);color:#999;border-color:rgba(150,150,150,.3)}
+.deity-s-banned{background:rgba(180,40,40,.12);color:#c0392b;border-color:rgba(180,40,40,.35)}
+.deity-s-forgotten{background:rgba(100,80,60,.12);color:#8a7560;border-color:rgba(100,80,60,.3)}
+
+/* DEITY MODAL */
+.deity-status-modal{display:inline-block;margin-bottom:1rem;font-size:.75rem;padding:.2rem .7rem;border-radius:10px;font-family:'Cormorant Garamond',serif;letter-spacing:.07em;font-style:italic;border:1px solid}
+.deity-meta-block{display:grid;grid-template-columns:auto 1fr;gap:.5rem .8rem;font-size:.88rem;line-height:1.5;margin-bottom:1.5rem;padding-bottom:1.2rem;border-bottom:1px solid var(--sand-deep)}
+.deity-meta-block .trait-row{display:contents}
+.deity-meta-block .trait-label{font-weight:600;color:var(--copper);font-size:.78rem;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;padding-top:.1rem}
+.deity-meta-block .trait-value{color:var(--ink-light)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(42,31,14,.6);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1.5rem;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(3px)}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--parchment);border:1px solid var(--sand-deep);border-radius:4px;max-width:680px;width:100%;max-height:85vh;overflow-y:auto;padding:2.5rem;position:relative;box-shadow:0 20px 60px var(--shadow-deep);transform:translateY(12px);transition:transform .3s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal.dossier-modal{background:var(--dos-bg);border:1px solid #aaa;border-radius:0;font-family:'Courier Prime',monospace;box-shadow:4px 4px 0 rgba(0,0,0,.15),0 20px 60px rgba(0,0,0,.3)}
+.modal-close{position:absolute;top:1rem;right:1rem;background:none;border:none;cursor:pointer;font-size:1.4rem;color:var(--ink-faded);line-height:1;padding:.2rem .4rem;transition:color .2s}
+.modal-close:hover{color:var(--copper)}
+.dossier-modal .modal-close:hover{color:var(--dos-red)}
+.modal-tag{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-light);font-family:'Cormorant Garamond',serif;margin-bottom:.5rem;display:block}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:600;color:var(--ink);margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--sand-deep);line-height:1.2}
+.modal.dossier-modal .modal-title{font-family:'Courier Prime',monospace;font-size:1rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--dos-ink);border-bottom-color:#aaa}
+.modal-body p{margin-bottom:1rem;font-size:1rem}
+.modal-body p:last-child{margin-bottom:0}
+
+/* DOSSIER CONTENT */
+.dossier-header{background:var(--dos-stamp);border:1px solid rgba(139,0,0,.2);padding:.8rem 1rem;margin-bottom:1.5rem}
+.dossier-stamp{font-weight:700;font-size:.8rem;letter-spacing:.2em;color:var(--dos-red);margin-bottom:.4rem}
+.dossier-meta{display:flex;flex-wrap:wrap;gap:1rem;font-size:.72rem;color:var(--dos-faded);letter-spacing:.05em}
+.dossier-field{display:grid;grid-template-columns:130px 1fr;gap:.5rem 1rem;margin-bottom:.8rem;font-size:.82rem;line-height:1.5;border-bottom:1px dotted #ccc;padding-bottom:.8rem}
+.dossier-label{font-weight:700;color:var(--dos-faded);letter-spacing:.05em;font-size:.72rem;text-transform:uppercase;padding-top:.1rem}
+.dossier-redacted{font-family:'Courier Prime',monospace;font-size:.85rem;color:var(--dos-ink);background:var(--dos-ink);border-radius:1px;margin-top:1rem;padding:.1rem 0;user-select:none}
+
+/* PASSWORD MODAL */
+.pw-modal{background:var(--parchment);border:1px solid var(--sand-deep);border-radius:4px;max-width:420px;width:100%;padding:2.5rem;box-shadow:0 20px 60px var(--shadow-deep);transform:translateY(12px);transition:transform .3s;text-align:center}
+.modal-overlay.open .pw-modal{transform:translateY(0)}
+.pw-lock{font-size:2.5rem;margin-bottom:1rem;opacity:.4}
+.pw-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:var(--ink);margin-bottom:.4rem}
+.pw-subtitle{font-size:.82rem;color:var(--ink-faded);margin-bottom:1.5rem;font-style:italic}
+.pw-input{width:100%;padding:.7rem 1rem;border:1px solid var(--sand-deep);background:white;border-radius:2px;font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--ink);text-align:center;letter-spacing:.05em;transition:border-color .2s;outline:none;margin-bottom:.8rem}
+.pw-input:focus{border-color:var(--copper)}
+.pw-input.error{border-color:#c0392b;animation:shake .4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.pw-error{font-size:.78rem;color:#c0392b;margin-bottom:.8rem;min-height:1.2em;font-style:italic}
+.pw-btn{width:100%;padding:.7rem;background:var(--copper);color:white;border:none;border-radius:2px;font-family:'Cormorant Garamond',serif;font-size:.95rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:background .2s}
+.pw-btn:hover{background:var(--copper-dim)}
+.pw-cancel{display:block;margin-top:.8rem;font-size:.78rem;color:var(--ink-faded);cursor:pointer;text-decoration:underline;text-underline-offset:2px;background:none;border:none;font-family:inherit}
+.pw-cancel:hover{color:var(--ink)}
+.pw-success{color:var(--teal);font-family:'Cormorant Garamond',serif;font-size:1rem;font-style:italic;padding:.5rem}
+
+/* LIFE STATUS ICON */
+.life-status{position:absolute;top:.7rem;right:.7rem;font-size:1.1rem;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+
+/* NPC MODAL HEADER */
+.npc-subtitle{margin:0 0 .5rem;font-size:.95rem;color:var(--ink-light);line-height:1.5}
+.npc-life-modal{display:inline-flex;align-items:center;gap:.4rem;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;font-family:'Cormorant Garamond',serif;color:var(--ink-light);margin-bottom:.4rem}
+.npc-faction-modal{font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;font-family:'Cormorant Garamond',serif;color:var(--copper);opacity:.85;margin-bottom:1.2rem}
+
+/* TRAITS BLOCK */
+.traits-block{margin-top:0;margin-bottom:1.5rem;padding-bottom:1.2rem;border-bottom:1px solid var(--sand-deep);display:grid;grid-template-columns:auto 1fr;gap:.5rem .8rem;font-size:.88rem;line-height:1.5}
+.trait-row{display:contents}
+.trait-label{font-family:'Cormorant Garamond',serif;font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-light);padding-top:.1rem}
+.trait-value{color:var(--ink);font-style:italic}
+
+/* LOADING */
+.loading{text-align:center;padding:4rem;font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--ink-faded);font-style:italic}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:3rem;color:var(--ink-faded);font-style:italic;font-family:'Cormorant Garamond',serif;font-size:1rem}
+
+/* TOAST */
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--parchment);padding:.7rem 1.5rem;border-radius:2px;font-size:.85rem;font-family:'Cormorant Garamond',serif;letter-spacing:.05em;opacity:0;transition:all .3s;z-index:2000;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+footer{text-align:center;padding:2rem;border-top:1px solid var(--sand-deep);font-size:.75rem;color:var(--ink-light);font-family:'Cormorant Garamond',serif;letter-spacing:.1em}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--sand)}::-webkit-scrollbar-thumb{background:var(--sand-deep);border-radius:3px}
+
+@media(max-width:600px){.entries-grid{grid-template-columns:1fr}.modal,.pw-modal{padding:1.5rem}.dossier-field{grid-template-columns:1fr;gap:.2rem}nav{gap:.15rem}.nav-btn{font-size:.8rem;padding:.35rem .7rem}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="site-eyebrow">Имарат аль-Фазар · 1207 НН</div>
+  <h1 class="site-title"><em>Васаик</em> аль-Фазар</h1>
+  <div class="site-subtitle">Записи и свидетельства</div>
+  <span class="ornament">✦ ✦ ✦</span>
+</header>
+
+<nav id="nav"><div class="loading">Загрузка...</div></nav>
+<main id="main"><div class="loading">Загрузка архива...</div></main>
+<footer>Васаик аль-Фазар · Имарат аль-Фазар · 1207 НН</footer>
+
+<!-- Entry modal -->
+<div class="modal-overlay" id="entryModal">
+  <div class="modal" id="entryModalInner">
+    <button class="modal-close" onclick="closeModal('entryModal')">✕</button>
+    <span class="modal-tag" id="modalTag"></span>
+    <h2 class="modal-title" id="modalTitle"></h2>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- Password modal -->
+<div class="modal-overlay" id="pwModal">
+  <div class="pw-modal">
+    <div class="pw-lock">🔒</div>
+    <div class="pw-title">Доступ закрыт</div>
+    <div class="pw-subtitle">Введите кодовую фразу для открытия записи</div>
+    <input class="pw-input" id="pwInput" type="text" placeholder="кодовая фраза..."
+      autocomplete="off" spellcheck="false"
+      onkeydown="if(event.key==='Enter')submitPassword()">
+    <div class="pw-error" id="pwError"></div>
+    <button class="pw-btn" onclick="submitPassword()">Открыть</button>
+    <button class="pw-cancel" onclick="closeModal('pwModal')">Отмена</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG — fill in before deploying to GitHub Pages ─────────────
+const GITHUB_OWNER      = '';                          // ваш GitHub username
+const GITHUB_DATA_REPO  = 'dnd-lore-encyclopeadia';    // приватный репо с данными
+const GITHUB_BRANCH     = 'main';
+const GITHUB_READ_TOKEN = '';     // read-only PAT для приватного репо
+// ──────────────────────────────────────────────────────────────────
+
+const STORAGE_KEY = 'vasaiq_unlocked';
+const TIERS_KEY = 'vasaiq_tiers';
+let unlockedIds = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
+let unlockedTiers = JSON.parse(localStorage.getItem(TIERS_KEY) || '{}'); // {entryId: maxTier}
+let siteData = null;
+let activeCategory = null;
+let pendingEntryId = null;
+
+const RARITY_LABELS = {
+  common: 'Обычное', uncommon: 'Необычное',
+  rare: 'Редкое', epic: 'Эпическое', legendary: 'Легендарное'
+};
+
+function saveUnlocked() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([...unlockedIds]));
+  localStorage.setItem(TIERS_KEY, JSON.stringify(unlockedTiers));
+}
+
+function isUnlocked(entry) {
+  return entry.public || unlockedIds.has(entry.id);
+}
+
+function getUnlockedTier(entry) {
+  if (entry.public) return entry.maxTier || 1;
+  return unlockedTiers[entry.id] || 1;
+}
+
+function hasTiers(entry) {
+  return (entry.content2 && entry.content2.trim()) || (entry.content3 && entry.content3.trim());
+}
+
+function totalTiers(entry) {
+  let t = 1;
+  if (entry.content2 && entry.content2.trim()) t = 2;
+  if (entry.content3 && entry.content3.trim()) t = 3;
+  return t;
+}
+
+// ── Markdown → HTML (mirror of editor) ────────────────────────────
+function mdToHtml(src) {
+  if (!src) return '';
+  let s = src.replace(/\r\n?/g, '\n').replace(/^\n+|\n+$/g, '');
+  const blocks = s.split(/\n{2,}/);
+  const out = [];
+  for (let block of blocks) {
+    const trimmed = block.trim();
+    if (!trimmed) continue;
+    if (/^<[a-zA-Z!\/]/.test(trimmed)) { out.push(trimmed); continue; }
+    if (/^#{1,3}\s+/.test(trimmed)) {
+      const m = trimmed.match(/^(#{1,3})\s+(.*)$/);
+      out.push(`<p><strong>${inline(m[2])}</strong></p>`);
+      continue;
+    }
+    if (/^---+$/.test(trimmed)) { out.push(`<hr>`); continue; }
+    if (/^>\s?/.test(trimmed)) {
+      const lines = trimmed.split('\n').map(l => l.replace(/^>\s?/, '')).join(' ');
+      out.push(`<p><em>— ${inline(lines)}</em></p>`);
+      continue;
+    }
+    out.push(`<p>${inline(trimmed.replace(/\n/g, ' '))}</p>`);
+  }
+  return out.join('\n');
+  function inline(s) {
+    return s
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+  }
+}
+
+function renderEntryContent(text, entry) {
+  // Detect format: explicit flag wins, else sniff for HTML
+  const fmt = entry.format || (/<[a-zA-Z][^>]*>/.test(text || '') ? 'html' : 'md');
+  return fmt === 'md' ? mdToHtml(text || '') : (text || '');
+}
+
+// ── Load data ─────────────────────────────────────────────────────
+async function loadData() {
+  try {
+    const headers = { 'Accept': 'application/vnd.github+json' };
+    if (GITHUB_READ_TOKEN) headers['Authorization'] = `token ${GITHUB_READ_TOKEN}`;
+    const res = await fetch(
+      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_DATA_REPO}/contents/lore.json?ref=${GITHUB_BRANCH}`,
+      { headers }
+    );
+    const meta = await res.json();
+    siteData = JSON.parse(decodeURIComponent(escape(atob(meta.content.replace(/\n/g, '')))));
+    activeCategory = siteData.categories[0].id;
+    buildNav();
+    buildMain();
+  } catch(e) {
+    document.getElementById('nav').innerHTML = '';
+    document.getElementById('main').innerHTML = `
+      <div class="loading" style="color:#c0392b">
+        Не удалось подключиться к серверу.<br>
+        <small>Убедитесь, что запущен node server.js</small>
+      </div>`;
+  }
+}
+
+// ── Nav ───────────────────────────────────────────────────────────
+function buildNav() {
+  document.getElementById('nav').innerHTML = siteData.categories.map(cat => `
+    <button class="nav-btn ${cat.id === activeCategory ? 'active' : ''}"
+      onclick="setCategory('${cat.id}')">
+      <span>${cat.icon}</span> ${cat.label}
+    </button>`).join('');
+}
+
+function setCategory(id) {
+  activeCategory = id;
+  buildNav();
+  buildMain();
+}
+
+// ── Main ──────────────────────────────────────────────────────────
+function buildMain() {
+  const cat = siteData.categories.find(c => c.id === activeCategory);
+  const all = siteData.entries.filter(e => e.category === activeCategory);
+  const isDossier = cat.dossier;
+
+  // Sort: open first (by rarity asc then alpha), locked after (alpha)
+  // Sessions category sorted by number instead
+  const RARITY_ORDER = {common:0, uncommon:1, rare:2, epic:3, legendary:4};
+  const byRarityThenTitle = (a, b) => {
+    const rd = (RARITY_ORDER[a.rarity||'common']||0) - (RARITY_ORDER[b.rarity||'common']||0);
+    return rd !== 0 ? rd : a.title.localeCompare(b.title, 'ru');
+  };
+  const byTitle = (a, b) => a.title.localeCompare(b.title, 'ru');
+  const byNumber = (a, b) => (a.number || 0) - (b.number || 0);
+  const isSessions = activeCategory === 'sessions';
+  const open   = all.filter(e =>  isUnlocked(e)).sort(isSessions ? byNumber : byRarityThenTitle);
+  const locked = all.filter(e => !isUnlocked(e)).sort(isSessions ? byNumber : byTitle);
+  const entries = [...open, ...locked];
+
+  let html = `<div class="category-title">${cat.icon} ${cat.label}</div>`;
+
+  if (!entries.length) {
+    html += `<div class="empty-state">В этом разделе пока нет записей.</div>`;
+  } else {
+    const renderCard = entry => {
+      const rarity = entry.rarity || 'common';
+      const rarityClass = ` r-${rarity}`;
+      const rarityBadge = `<div class="rarity-badge">${RARITY_LABELS[rarity] || 'Обычное'}</div>`;
+      const isLocation = entry.category === 'locations';
+      if (isUnlocked(entry)) {
+        const tot = totalTiers(entry);
+        const unlocked = getUnlockedTier(entry);
+        const pips = tot > 1 ? `<div class="tier-pips">${Array.from({length:tot},(_,i)=>`<div class="tier-pip${i<unlocked?' unlocked':''}"></div>`).join('')}</div>` : '';
+        const lifeIcons = {'alive':'🟢','dead':'💀','imprisoned':'⛓','fled':'🏃','unknown':'❓'};
+        const lifeIcon = (entry.category === 'npcs' && entry.lifeStatus) ? `<div class="life-status">${lifeIcons[entry.lifeStatus] || ''}</div>` : '';
+        // Location-specific extras
+        const placeTypeRow = (isLocation && entry.placeType) ? `<div class="place-type">${entry.placeType}</div>` : '';
+        const placeRegionRow = (isLocation && entry.region) ? `<div class="place-region">${entry.region}</div>` : '';
+        const subtitle = entry.tagline || entry.subtitle;
+        const sessionNum = (entry.category === 'sessions' && entry.number != null)
+          ? `<div class="session-number">Сессия ${entry.number}</div>` : '';
+        const isNpc = entry.category === 'npcs';
+        const isDeity = entry.category === 'religion';
+        const cardFactionEntry = (isNpc && entry.faction) ? siteData.entries.find(e => e.id === entry.faction) : null;
+        const cardFaction = cardFactionEntry ? `<div class="card-faction">${cardFactionEntry.title}</div>` : '';
+        const catTag = (!isNpc && entry.category !== 'sessions')
+          ? `<div class="entry-cat-tag">${isDossier ? '◈ АСАС АЛЬ-СИРР' : cat.label}</div>` : '';
+        const deityDomain = (isDeity && entry.domain) ? `<div class="deity-domain">${entry.domain}</div>` : '';
+        const deityStatusColors = {'Государственный культ':'deity-s-state','Разрешён':'deity-s-allowed','Терпим':'deity-s-tolerated','Запрещён':'deity-s-banned','Забыт':'deity-s-forgotten'};
+        const deityStatusBadge = (isDeity && entry.deityStatus) ? `<div class="deity-status ${deityStatusColors[entry.deityStatus] || ''}">${entry.deityStatus}</div>` : '';
+        const cardClasses = `entry-card${rarityClass} ${isDossier ? 'dossier-card' : ''} ${isLocation ? 'location-card' : ''} ${isDeity ? 'deity-card' : ''}`;
+        return `<div class="${cardClasses}" onclick="openEntry('${entry.id}')">
+          ${lifeIcon}
+          ${sessionNum || placeTypeRow || rarityBadge}
+          ${catTag}
+          <div class="entry-title">${entry.title}</div>
+          ${subtitle ? `<div class="entry-subtitle">${subtitle}</div>` : ''}
+          ${deityDomain}
+          ${entry.status ? `<div class="entry-status">${entry.status}</div>` : ''}
+          ${cardFaction}
+          ${placeRegionRow}
+          ${deityStatusBadge}
+          ${pips}
+        </div>`;
+      } else {
+        return `<div class="entry-card locked ${isDossier ? 'dossier-card' : ''} ${isLocation ? 'location-card' : ''}" onclick="openPasswordModal('${entry.id}')">
+          <div class="lock-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="11" width="18" height="11" rx="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <span class="lock-label">Закрыто</span>
+          </div>
+        </div>`;
+      }
+    };
+    html += `<div class="entries-grid">` + entries.map(renderCard).join('') + `</div>`;
+  }
+
+  document.getElementById('main').innerHTML = html;
+}
+
+// ── Entry modal ───────────────────────────────────────────────────
+function openEntry(id) {
+  const entry = siteData.entries.find(e => e.id === id);
+  if (!entry || !isUnlocked(entry)) return;
+  const cat = siteData.categories.find(c => c.id === entry.category);
+  const isDossier = cat.dossier;
+  const rarity = entry.rarity || 'common';
+
+  const modal = document.getElementById('entryModalInner');
+  modal.className = 'modal' + (isDossier ? ' dossier-modal' : '') + (rarity !== 'common' ? ` r-${rarity}` : '');
+
+  const adventureTag = (entry.category === 'sessions' && entry.adventure)
+    ? `${cat.label} · ${entry.adventure}`
+    : isDossier ? '◈ АСАС АЛЬ-СИРР' : cat.label;
+  document.getElementById('modalTag').textContent = adventureTag;
+  document.getElementById('modalTitle').textContent = entry.title;
+
+  // Build tiered content
+  const unlockedTier = getUnlockedTier(entry);
+  const tiers = [entry.content, entry.content2, entry.content3].filter(Boolean);
+  let contentHtml = '';
+  tiers.forEach((t, i) => {
+    if (i < unlockedTier && t && t.trim()) {
+      const rendered = renderEntryContent(t, entry);
+      contentHtml += tiers.length > 1
+        ? `<div class="tier-section"><div class="tier-label">Уровень ${i+1}</div>${rendered}</div>`
+        : rendered;
+    }
+  });
+
+  // NPC header: subtitle in cursive + life status
+  const lifeIcons  = {'alive':'🟢','dead':'💀','imprisoned':'⛓','fled':'🏃','unknown':'❓'};
+  const lifeLabelsM = {'alive':'Жив','dead':'Погиб','imprisoned':'В заключении','fled':'Бежал','unknown':'Неизвестно'};
+  const lifeLabelsF = {'alive':'Жива','dead':'Погибла','imprisoned':'В заключении','fled':'Бежала','unknown':'Неизвестно'};
+  function lifeLabel(entry) {
+    const map = entry.gender === 'f' ? lifeLabelsF : lifeLabelsM;
+    return map[entry.lifeStatus] || '';
+  }
+  const factionEntry = entry.faction ? siteData.entries.find(e => e.id === entry.faction) : null;
+  const npcMeta = [entry.race || '', factionEntry ? factionEntry.title : ''].filter(Boolean).join(' · ');
+  const npcHeaderHtml = entry.category === 'npcs' ? [
+    entry.subtitle   ? `<p class="npc-subtitle"><em>${entry.subtitle}</em></p>` : '',
+    entry.lifeStatus ? `<div class="npc-life-modal">${lifeIcons[entry.lifeStatus] || ''} ${lifeLabel(entry)}</div>` : '',
+    npcMeta          ? `<div class="npc-faction-modal">${npcMeta}</div>` : '',
+  ].join('') : '';
+
+  // Traits — only for uncommon+ and only when tier 2 is unlocked
+  const traitsHtml = (entry.category === 'npcs' && unlockedTier >= 2 && (entry.ideal || entry.bond || entry.flaw)) ? `
+    <div class="traits-block">
+      ${entry.ideal ? `<div class="trait-row"><span class="trait-label">Идеал</span><span class="trait-value">${entry.ideal}</span></div>` : ''}
+      ${entry.bond  ? `<div class="trait-row"><span class="trait-label">Привязанность</span><span class="trait-value">${entry.bond}</span></div>` : ''}
+      ${entry.flaw  ? `<div class="trait-row"><span class="trait-label">Изъян</span><span class="trait-value">${entry.flaw}</span></div>` : ''}
+    </div>` : '';
+
+  // Deity header
+  const deityStatusColors = {'Государственный культ':'deity-s-state','Разрешён':'deity-s-allowed','Терпим':'deity-s-tolerated','Запрещён':'deity-s-banned','Забыт':'deity-s-forgotten'};
+  const deityHeaderHtml = entry.category === 'religion' ? (() => {
+    const rows = [
+      entry.domain      ? ['Домен', entry.domain] : null,
+      entry.alignment   ? ['Мировоззрение', entry.alignment] : null,
+      entry.symbol      ? ['Символы', entry.symbol] : null,
+    ].filter(Boolean);
+    const table = rows.length ? `<div class="deity-meta-block">${rows.map(([l,v]) => `<div class="trait-row"><span class="trait-label">${l}</span><span class="trait-value">${v}</span></div>`).join('')}</div>` : '';
+    const badge = entry.deityStatus ? `<div class="deity-status-modal ${deityStatusColors[entry.deityStatus] || ''}">${entry.deityStatus}</div>` : '';
+    return badge + table;
+  })() : '';
+
+  document.getElementById('modalBody').innerHTML = npcHeaderHtml + deityHeaderHtml + traitsHtml + contentHtml;
+  openModal('entryModal');
+}
+
+// ── Password modal ────────────────────────────────────────────────
+function openPasswordModal(id) {
+  pendingEntryId = id;
+  document.getElementById('pwInput').value = '';
+  document.getElementById('pwError').textContent = '';
+  document.getElementById('pwInput').classList.remove('error');
+  openModal('pwModal');
+  setTimeout(() => document.getElementById('pwInput').focus(), 300);
+}
+
+async function submitPassword() {
+  const phrase = document.getElementById('pwInput').value.trim().toLowerCase();
+  const errorEl = document.getElementById('pwError');
+  const inputEl = document.getElementById('pwInput');
+  if (!phrase) return;
+
+  const matched = siteData.passwords[phrase] || null;
+
+  if (!matched) {
+    inputEl.classList.add('error');
+    errorEl.textContent = 'Неверная фраза. Попробуйте ещё раз.';
+    setTimeout(() => inputEl.classList.remove('error'), 500);
+    return;
+  }
+
+  matched.forEach(item => {
+    if (typeof item === 'string') {
+      unlockedIds.add(item);
+    } else if (item && item.id) {
+      unlockedIds.add(item.id);
+      if (item.tier) {
+        unlockedTiers[item.id] = Math.max(unlockedTiers[item.id] || 1, item.tier);
+      }
+    }
+  });
+  saveUnlocked();
+
+  closeModal('pwModal');
+  buildMain();
+
+  setTimeout(() => {
+    const matchedIds = matched.map(item => typeof item === 'string' ? item : item?.id).filter(Boolean);
+    if (matchedIds.includes(pendingEntryId)) openEntry(pendingEntryId);
+    pendingEntryId = null;
+  }, 200);
+}
+
+// ── Modal helpers ─────────────────────────────────────────────────
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.querySelectorAll('.modal-overlay').forEach(o =>
+  o.addEventListener('click', e => { if (e.target === o) closeModal(o.id); }));
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal('entryModal'); closeModal('pwModal'); }
+});
+
+loadData();
+</script>
+</body>
+</html>
